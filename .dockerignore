@@ -1,0 +1,15 @@
+# Whitelist file, start by ignoring everything
+*
+
+# Add scripts
+!scripts/**/*.sh
+
+# Add requirements
+!requirements.txt
+
+# Add Python files in app
+!app/**/*.py
+
+# Add alembic configurations
+!app/*.ini
+!app/alembic/*.mako

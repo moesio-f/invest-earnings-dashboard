@@ -1,0 +1,186 @@
+from typing import Callable
+
+import streamlit as st
+
+from app.config import DASHBOARD_CONFIG as config
+from app.dashboard.scoped_state import ProxiedGlobal, ScopedState
+from app.db.models import AssetKind, EarningKind, TransactionKind
+
+_PREFIX = "__form_create_dialog_{}"
+
+
+def _global_state_to_scope_as_property(state: ScopedState, prefix: str):
+    prefix = f"{prefix}_"
+    for k in st.session_state:
+        if isinstance(k, str) and k.startswith(prefix):
+            prop_name = k.replace(prefix, "")
+            state[prop_name] = ProxiedGlobal(k)
+
+
+@st.dialog("Adicionar ativo")
+def asset_create(create_fn: Callable[[ScopedState], None]):
+    prefix = _PREFIX.format("asset")
+    state = ScopedState(prefix)
+    with st.form("variable_asset_create", enter_to_submit=False, border=False):
+        st.text_input("Código B3:", key=f"{prefix}_b3_code")
+
+        st.text_input("Nome do ativo:", key=f"{prefix}_name")
+
+        st.text_area("Descrição do ativo:", key=f"{prefix}_description")
+
+        st.pills(
+            "Tipo do ativo:",
+            [k.value for k in AssetKind],
+            key=f"{prefix}_kind",
+        )
+
+        submit = st.form_submit_button(
+            "Adicionar",
+            on_click=create_fn,
+            args=[state],
+        )
+
+        # After all elements have been shown, add their keys
+        #   to state
+        _global_state_to_scope_as_property(state, prefix)
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
+@st.dialog("Adicionar transação")
+def add_transaction(
+    asset_codes: list[str],
+    create_fn: Callable[[ScopedState], None],
+):
+    prefix = _PREFIX.format("transaction")
+    state = ScopedState(prefix)
+    with st.form(f"{prefix}_create", enter_to_submit=False, border=False):
+        st.selectbox(
+            "Ativo:",
+            asset_codes,
+            key=f"{prefix}_asset_b3_code",
+        )
+
+        st.pills(
+            "Tipo da transação:",
+            [k.value for k in TransactionKind],
+            key=f"{prefix}_kind",
+        )
+
+        st.date_input(
+            "Data da transação:",
+            key=f"{prefix}_date",
+            format=config.ST_DATE_FORMAT,
+        )
+
+        st.number_input(
+            "Valor por unidade (R$):",
+            key=f"{prefix}_value_per_share",
+            min_value=0.0,
+            value=0.0,
+            step=1.0,
+            format="%0.2f",
+        )
+
+        st.number_input(
+            "Quantidade de unidades:",
+            key=f"{prefix}_shares",
+            min_value=0,
+            value=0,
+            step=1,
+            format="%d",
+        )
+
+        submit = st.form_submit_button("Adicionar", on_click=create_fn, args=[state])
+
+        # After all elements have been shown, add their keys
+        #   to state
+        _global_state_to_scope_as_property(state, prefix)
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
+@st.dialog("Cadastrar Provento")
+def add_earning(
+    asset_codes: list[str],
+    create_fn: Callable[[ScopedState], None],
+):
+    prefix = _PREFIX.format("earning")
+    state = ScopedState(prefix)
+    with st.form(f"{prefix}_create", enter_to_submit=False, border=False):
+        st.selectbox("Ativo:", asset_codes, key=f"{prefix}_asset_b3_code")
+
+        st.date_input(
+            "Data de custódia:",
+            key=f"{prefix}_hold_date",
+            format=config.ST_DATE_FORMAT,
+        )
+
+        st.date_input(
+            "Data de pagamento:",
+            key=f"{prefix}_payment_date",
+            format=config.ST_DATE_FORMAT,
+        )
+
+        st.number_input(
+            "Valor por unidade (R$):",
+            key=f"{prefix}_value_per_share",
+            min_value=0.0,
+            step=0.01,
+            value=0.0,
+            format="%0.2f",
+        )
+
+        st.pills(
+            "Tipo de provento:",
+            [k.value for k in EarningKind],
+            key=f"{prefix}_kind",
+        )
+
+        st.number_input(
+            "Imposto de Renda Retido na Fonte (%):",
+            key=f"{prefix}_ir_percentage",
+            min_value=0.0,
+            step=0.01,
+            value=0.0,
+            format="%0.2f",
+        )
+
+        submit = st.form_submit_button(
+            "Adicionar",
+            on_click=create_fn,
+            args=[state],
+        )
+
+        # After all elements have been shown, add their keys
+        #   to state
+        _global_state_to_scope_as_property(state, prefix)
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
+@st.dialog("Upload de CSV")
+def text_upload(fn: Callable[[ScopedState], None], help: str):
+    prefix = _PREFIX.format("text_upload")
+    state = ScopedState(prefix)
+
+    with st.form(f"{prefix}_text_upload", enter_to_submit=False, border=False):
+        st.markdown(help)
+
+        st.text_area("Conteúdo do CSV:", key=f"{prefix}_csv_contents")
+
+        submit = st.form_submit_button("Adicionar", on_click=fn, args=[state])
+
+        # After all elements have been shown, add their keys
+        #   to state
+        _global_state_to_scope_as_property(state, prefix)
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
