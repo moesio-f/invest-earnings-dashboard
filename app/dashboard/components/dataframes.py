@@ -143,6 +143,7 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
         hide_index=True,
         column_order=[
             "b3_code",
+            "asset_kind",
             "kind",
             "ir",
             "hold_date",
@@ -156,6 +157,7 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
         ],
         column_config={
             "b3_code": st.column_config.TextColumn("Código do Ativo (B3)", pinned=True),
+            "asset_kind": st.column_config.TextColumn("Classe do Ativo", help="Classe do ativo."),
             "kind": st.column_config.TextColumn("Tipo", help="Tipo de provento."),
             "shares": st.column_config.NumberColumn(
                 "Unidades",

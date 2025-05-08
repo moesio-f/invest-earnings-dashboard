@@ -4,12 +4,15 @@ import streamlit as st
 
 from app.api.v1_facade import v1Facade
 from app.config import DASHBOARD_CONFIG as config
+from app.dashboard.components import charts
 from app.dashboard.components import dataframes as cdf
+from app.dashboard.components import metrics as cme
 from app.dashboard.scoped_state import ScopedState
-from app.db.models import EarningKind
+from app.db.models import AssetKind, EarningKind
 
 state = ScopedState("home")
 api = v1Facade()
+today = date.today()
 
 
 # === Inicializando estado de página ===
@@ -19,18 +22,21 @@ def update_state(update_earning_yield: bool = False):
 
     # Update earnings
     state.earnings = api.earnings()
-    state.asset_codes = list(set(e.asset_b3_code for e in state.earnings))
+    state.asset_codes = list(sorted(set(e.asset_b3_code for e in state.earnings)))
 
     # Maybe update earning yield
-    state._earning_yield = state.get("_earning_yield", None)
-    if state._earning_yield is None or update_earning_yield:
-        state._earning_yield = api.earning_yield()
-        state._earning_yield["kind"] = state._earning_yield.kind.map(
+    state.earning_yield = state.get("_earning_yield", None)
+    if state.earning_yield is None or update_earning_yield:
+        state.earning_yield = api.earning_yield()
+        state.earning_yield["kind"] = state.earning_yield.kind.map(
             lambda k: EarningKind.from_value(k).value
+        )
+        state.earning_yield["asset_kind"] = state.earning_yield.asset_kind.map(
+            lambda k: AssetKind.from_value(k).value
         )
 
     # Filter
-    df = state._earning_yield
+    df = state.earning_yield
     if (
         not df.empty
         and (asset := st.session_state.get("filter_asset", "Todos")) != "Todos"
@@ -53,7 +59,12 @@ def update_state(update_earning_yield: bool = False):
         df = df[(df[dcol] >= ds) & (df[dcol] <= de)]
 
     # Make the filtered version available
-    state.earning_yield = df
+    state.filtered_ey = df
+    state.current_month_ey = state.earning_yield[
+        state.earning_yield.payment_date.map(
+            lambda d: (d.month == today.month) and (d.year == today.year)
+        )
+    ]
 
     # If we initialized, set flag
     if initialize:
@@ -65,8 +76,49 @@ update_state()
 # ==== Título ====
 st.title("Análise de Proventos")
 
-# === Listagem de proventos ===
-st.subheader("Lista de Proventos", divider="gray")
+# Métricas
+cme.earning_global_metrics(state.earning_yield)
+
+# Gráfico de proventos por mês
+charts.monthly_earnings(state.earning_yield, show_table=True)
+
+# ==== Posição Atual ====
+st.subheader("Posição Atual", divider="gray")
+
+st.markdown("### Total de Proventos por Classes")
+cols = st.columns(2)
+
+# Proventos por Classe de Ativo
+with cols[0]:
+    charts.earnings_by(state.earning_yield, "asset_kind")
+
+# Proventos por ativo
+with cols[1]:
+    charts.earnings_by(state.earning_yield, "b3_code")
+
+# Proventos recebidos e a receber
+st.markdown("### Recebidos no Mês")
+cdf.earning_yield_dataframe(
+    state.current_month_ey[state.current_month_ey.payment_date <= today]
+)
+
+st.markdown("### A Receber no Mês")
+cdf.earning_yield_dataframe(
+    state.current_month_ey[state.current_month_ey.payment_date > today]
+)
+
+# ==== Evolução do YoC ====
+st.subheader("Yield on Cost Médio Mensal", divider="gray")
+
+# YoC mensal por diferentes grupos
+asset = st.selectbox(
+    "Ativo base:",
+    ["Todos"] + state.asset_codes,
+)
+charts.monthly_yoc(state.earning_yield, asset)
+
+# ==== Proventos por Ativo ====
+st.subheader("Proventos por Ativo", divider="gray")
 
 # Filtros
 cols = st.columns(5)
@@ -94,7 +146,7 @@ cols[3].date_input(
     "Data inicial:",
     key="filter_start_date",
     value=date(2000, 1, 1),
-    max_value="today",
+    max_value=date(2050, 1, 1),
     format=config.ST_DATE_FORMAT,
     on_change=update_state,
 )
@@ -107,4 +159,4 @@ cols[4].date_input(
 )
 
 # Listagem de proventos
-cdf.earning_yield_dataframe(state.earning_yield)
+cdf.earning_yield_dataframe(state.filtered_ey)

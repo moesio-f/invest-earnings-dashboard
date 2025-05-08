@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningYield
-from app.db.models import Earning, Transaction, TransactionKind
+from app.db.models import Earning, Transaction, TransactionKind, Asset
 
 
 class EarningAnalytics:
@@ -17,7 +17,6 @@ class EarningAnalytics:
         return EarningYield.validate(self._earning_yield())
 
     def _earning_yield(self) -> pd.DataFrame:
-        transaction_kind = Transaction.kind.label("transaction_kind")
         stmt = (
             sa.select(
                 Earning.id.label("earning_id"),
@@ -26,13 +25,15 @@ class EarningAnalytics:
                 Earning.payment_date,
                 Earning.value_per_share,
                 Earning.kind,
+                Asset.kind.label("asset_kind"),
                 Earning.ir_percentage.label("ir"),
                 Earning.value_per_share,
                 Transaction.value_per_share.label("share_price"),
                 Transaction.shares,
-                transaction_kind,
+                Transaction.kind.label("transaction_kind"),
             )
             .select_from(Earning)
+            .join(Earning.asset)
             .join(Earning.right_to_earnings)
         )
         df = pd.read_sql(str(stmt.compile(self._engine)), self._engine)
@@ -62,6 +63,7 @@ class EarningAnalytics:
             "payment_date",
             "value_per_share",
             "kind",
+            "asset_kind",
             "ir",
             "transaction_kind",
         ]

@@ -9,7 +9,7 @@ import pandera as pa
 import pandera.extensions as extensions
 from pandera.typing.pandas import Series
 
-from app.db.models import EarningKind
+from app.db.models import EarningKind, AssetKind
 
 if "is_valid_enum" not in pa.Check.REGISTERED_CUSTOM_CHECKS:
 
@@ -23,6 +23,7 @@ if "is_valid_enum" not in pa.Check.REGISTERED_CUSTOM_CHECKS:
 
 class EarningYield(pa.DataFrameModel):
     b3_code: Series[str] = pa.Field(nullable=False)
+    asset_kind: Series[str] = pa.Field(is_valid_enum={"enum": AssetKind})
     hold_date: Series[date] = pa.Field(nullable=False, coerce=False)
     payment_date: Series[date] = pa.Field(nullable=False, coerce=False)
     kind: Series[str] = pa.Field(is_valid_enum={"enum": EarningKind})

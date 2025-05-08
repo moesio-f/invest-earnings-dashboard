@@ -6,14 +6,14 @@ all: down build up
 
 
 down:
-	@docker compose down
+	@docker compose -f ${COMPOSE} down
 
 build:
-	@docker compose build
+	@docker compose -f ${COMPOSE} build
 
 up:
-	@docker compose up -d
+	@docker compose -f ${COMPOSE} up -d
 
 logs:
-	@docker compose logs -f
+	@docker compose -f ${COMPOSE} logs -f
 
