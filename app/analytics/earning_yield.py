@@ -84,6 +84,9 @@ class EarningAnalytics:
         # Find the dividend share after IR
         df["ir_adjusted_value_per_share"] = df.value_per_share * (1 - df.ir / 100)
 
+        # Find total dividend
+        df["total_earnings"] = df.ir_adjusted_value_per_share * df.shares
+
         # Find YoC
         df["yoc"] = 100 * (df.ir_adjusted_value_per_share / df.avg_price)
 

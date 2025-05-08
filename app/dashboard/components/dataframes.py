@@ -32,7 +32,7 @@ def asset_dataframe(assets: list[Asset]):
                 data[k].append(v)
 
     st.dataframe(
-        pd.DataFrame(data),
+        pd.DataFrame(data).sort_values(["kind", "b3_code"]),
         hide_index=True,
         column_config={
             "b3_code": st.column_config.TextColumn("Código do Ativo (B3)", pinned=True),
@@ -71,7 +71,7 @@ def transaction_dataframe(transactions: list[Transaction]):
                 data[k].append(v)
 
     st.dataframe(
-        pd.DataFrame(data),
+        pd.DataFrame(data).sort_values("date"),
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(
@@ -113,7 +113,7 @@ def earning_dataframe(earnings: list[Earning]):
                 data[k].append(v)
 
     st.dataframe(
-        pd.DataFrame(data),
+        pd.DataFrame(data).sort_values("payment_date"),
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(
@@ -151,6 +151,7 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
             "avg_price",
             "value_per_share",
             "ir_adjusted_value_per_share",
+            "total_earnings",
             "yoc",
         ],
         column_config={
@@ -171,12 +172,18 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
             **{
                 k: st.column_config.NumberColumn(label, help=help, format="R$ %.2f")
                 for k, label, help in zip(
-                    ["value_per_share", "ir_adjusted_value_per_share", "avg_price"],
-                    ["Valor Bruto", "Valor Líquido", "Preço Médio"],
+                    [
+                        "value_per_share",
+                        "ir_adjusted_value_per_share",
+                        "avg_price",
+                        "total_earnings",
+                    ],
+                    ["Valor Bruto", "Valor Líquido", "Preço Médio", "Total"],
                     [
                         "Proventos brutos por ação.",
                         "Proventos por ação após IR.",
-                        "Preço Médio até a data de custódia. Considera apenas transações de compra elegíveis.",
+                        "Preço médio até a data de custódia. Considera apenas transações de compra elegíveis.",
+                        "Total de proventos com base na quantidade de unidades e valor líquido por unidade.",
                     ],
                 )
             },

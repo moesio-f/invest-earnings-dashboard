@@ -32,3 +32,4 @@ class EarningYield(pa.DataFrameModel):
     avg_price: Series[float] = pa.Field(nullable=False)
     shares: Series[int] = pa.Field(nullable=False)
     yoc: Series[float] = pa.Field(nullable=False)
+    total_earnings: Series[float] = pa.Field(nullable=False)
