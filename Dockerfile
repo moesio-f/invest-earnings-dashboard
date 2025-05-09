@@ -15,6 +15,8 @@ FROM python:3.13-slim-bookworm
 ENV PATH=/code/venv/bin:$PATH
 ENV PYTHONPATH=/code:$PYTHONPATH
 ENV PYTHONUNBUFFERED=1
+ENV TZ=America/Sao_Paulo
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezon
 
 WORKDIR /code
 

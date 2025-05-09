@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings
 
 
 class DashboardConfig(BaseSettings):
+    DATE_FORMAT: str = "%d/%m/%Y"
     ST_DATE_FORMAT: str = "DD/MM/YYYY"
     PAGE_TITLE: str = "Dashboard"
     PAGE_LAYOUT: str = "wide"

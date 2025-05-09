@@ -4,7 +4,6 @@ import streamlit as st
 from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningYield
-from app.dashboard.scoped_state import ScopedState
 
 
 def earning_global_metrics(
@@ -12,7 +11,7 @@ def earning_global_metrics(
 ):
 
     for container, label, value, help in zip(
-        [*st.columns(6)[1:-1]],
+        [*st.columns(4 + 2)[1:-1]],
         [
             "Ativos com Proventos",
             "Total de Proventos",

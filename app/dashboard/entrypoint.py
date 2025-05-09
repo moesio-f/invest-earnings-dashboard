@@ -2,6 +2,8 @@
 com streamlit multi página.
 """
 
+from datetime import date
+
 import streamlit as st
 
 from app.config import DASHBOARD_CONFIG as config
@@ -10,6 +12,7 @@ from app.config import DASHBOARD_CONFIG as config
 st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
 
 # Configure navigation bar
+st.sidebar.markdown(f"> _Data do sistema: {date.today().strftime(config.DATE_FORMAT)}_")
 pg = st.navigation(
     [
         st.Page("pages/home.py", title="Home", icon=":material/home:"),
@@ -18,7 +21,8 @@ pg = st.navigation(
             title="Configurações",
             icon=":material/settings:",
         ),
-    ]
+    ],
+    expanded=False,
 )
 
 # Maybe clear state on page change
