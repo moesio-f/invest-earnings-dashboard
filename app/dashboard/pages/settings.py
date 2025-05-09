@@ -51,6 +51,15 @@ def add_earning(data: ScopedState):
     update_state(update_earnings=True, filter_earnings=True)
 
 
+def add_economic(data: ScopedState):
+    api.add_economic_data(
+        index=data.index(),
+        reference_date=data.reference_date(),
+        percentage_change=data.percentage_change(),
+    )
+    update_state(update_economic_data=True)
+
+
 def load_economic_data(data: ScopedState):
     io = StringIO(data.csv_contents())
     io.seek(0)
@@ -291,6 +300,15 @@ if st.button(
 
 # === Dados Econômicos ===
 st.subheader("Dados Econômicos", divider="gray")
+
+# Adicionar dado
+if st.button(
+    "Adicionar dado",
+    icon=":material/add_circle:",
+    help="Cadastrar um novo dado econônico no sistema.",
+    use_container_width=True,
+):
+    cfd.add_economic_data(add_economic)
 
 # Listagem
 cdf.economic_data_dataframe(state.economic)

@@ -21,6 +21,7 @@ from app.db.models import (
     EconomicData,
     Transaction,
     TransactionKind,
+    EconomicIndex,
 )
 
 
@@ -123,6 +124,22 @@ class v1Facade:
                 .options(sa_orm.selectinload(Transaction.entitled_to_earnings))
                 .all()
             )
+
+    def add_economic_data(
+        self,
+        index: EconomicIndex,
+        reference_date: date,
+        percentage_change: float,
+        number_index: float = None,
+    ):
+        self.load_economic_data(
+            dict(
+                index=index,
+                reference_date=reference_date,
+                percentage_change=percentage_change,
+                number_index=number_index,
+            )
+        )
 
     def load_economic_data(self, *data: dict):
         data = list(data)

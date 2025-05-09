@@ -4,7 +4,7 @@ import streamlit as st
 
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.scoped_state import ProxiedGlobal, ScopedState
-from app.db.models import AssetKind, EarningKind, TransactionKind
+from app.db.models import AssetKind, EarningKind, TransactionKind, EconomicIndex
 
 _PREFIX = "__form_create_dialog_{}"
 
@@ -144,6 +144,50 @@ def add_earning(
         st.number_input(
             "Imposto de Renda Retido na Fonte (%):",
             key=f"{prefix}_ir_percentage",
+            min_value=0.0,
+            step=0.01,
+            value=0.0,
+            format="%0.2f",
+        )
+
+        submit = st.form_submit_button(
+            "Adicionar",
+            on_click=create_fn,
+            args=[state],
+        )
+
+        # After all elements have been shown, add their keys
+        #   to state
+        _global_state_to_scope_as_property(state, prefix)
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
+@st.dialog("Cadastrar Dado Econômico")
+def add_economic_data(
+    create_fn: Callable[[ScopedState], None],
+):
+    prefix = _PREFIX.format("economic_data")
+    state = ScopedState(prefix)
+    with st.form(f"{prefix}_create", enter_to_submit=False, border=False):
+        st.pills(
+            "Índice:",
+            list(EconomicIndex),
+            format_func=lambda e: e.value,
+            key=f"{prefix}_index",
+        )
+
+        st.date_input(
+            "Data de referência:",
+            key=f"{prefix}_reference_date",
+            format=config.ST_DATE_FORMAT,
+        )
+
+        st.number_input(
+            "Variação (%):",
+            key=f"{prefix}_percentage_change",
             min_value=0.0,
             step=0.01,
             value=0.0,
