@@ -20,11 +20,7 @@ def update_state(update_earning_yield: bool = False):
     # Is page initialized?
     initialize = not state.get("initialized", False)
 
-    # Update earnings
-    state.earnings = api.earnings()
-    state.asset_codes = list(sorted(set(e.asset_b3_code for e in state.earnings)))
-
-    # Maybe update earning yield
+    # Maybe update earning yield and others
     state.earning_yield = state.get("_earning_yield", None)
     if state.earning_yield is None or update_earning_yield:
         state.earning_yield = api.earning_yield()
@@ -34,6 +30,7 @@ def update_state(update_earning_yield: bool = False):
         state.earning_yield["asset_kind"] = state.earning_yield.asset_kind.map(
             lambda k: AssetKind.from_value(k).value
         )
+        state.asset_codes = state.earning_yield.b3_code.unique().tolist()
 
     # Filter
     df = state.earning_yield
@@ -73,91 +70,102 @@ def update_state(update_earning_yield: bool = False):
 
 update_state()
 
+
 # ==== Título ====
 st.title("Análise de Proventos")
 
-# Métricas
-cme.earning_global_metrics(state.earning_yield)
+# Caso existam proventos, exibir
+if state.asset_codes:
+    # Métricas
+    cme.earning_global_metrics(state.earning_yield)
 
-# Gráfico de proventos por mês
-charts.monthly_earnings(state.earning_yield, show_table=True)
+    # Gráfico de proventos por mês
+    charts.monthly_earnings(state.earning_yield, show_table=True)
 
-# ==== Posição Atual ====
-st.subheader("Posição Atual", divider="gray")
+    # ==== Posição Atual ====
+    st.subheader("Posição Atual", divider="gray")
 
-st.markdown("### Total de Proventos por Classes")
-cols = st.columns(2)
+    st.markdown("### Total de Proventos por Classes")
+    cols = st.columns(2)
 
-# Proventos por Classe de Ativo
-with cols[0]:
-    charts.earnings_by(state.earning_yield, "asset_kind")
+    # Proventos por Classe de Ativo
+    with cols[0]:
+        charts.earnings_by(state.earning_yield, "asset_kind")
 
-# Proventos por ativo
-with cols[1]:
-    charts.earnings_by(state.earning_yield, "b3_code")
+    # Proventos por ativo
+    with cols[1]:
+        charts.earnings_by(state.earning_yield, "b3_code")
 
-# Proventos recebidos e a receber
-for title, cond in zip(
-    ["Recebidos", "A Receber"],
-    [
-        state.current_month_ey.payment_date <= today,
-        state.current_month_ey.payment_date > today,
-    ],
-):
-    df = state.current_month_ey[cond]
-    st.markdown(f"### {title} no Mês: `R$ {df.total_earnings.sum():.2f}`")
-    cdf.earning_yield_dataframe(df)
+    # Proventos recebidos e a receber
+    for title, cond in zip(
+        ["Recebidos", "A Receber"],
+        [
+            state.current_month_ey.payment_date <= today,
+            state.current_month_ey.payment_date > today,
+        ],
+    ):
+        df = state.current_month_ey[cond]
+        st.markdown(f"### {title} no Mês: `R$ {df.total_earnings.sum():.2f}`")
+        cdf.earning_yield_dataframe(df)
 
-# ==== Evolução do YoC ====
-st.subheader("Yield on Cost Médio Mensal", divider="gray")
+    # ==== Evolução do YoC ====
+    st.subheader("Yield on Cost Médio Mensal", divider="gray")
 
-# YoC mensal por diferentes grupos
-asset = st.selectbox(
-    "Ativo base:",
-    ["Todos"] + state.asset_codes,
-)
-charts.monthly_yoc(state.earning_yield, asset)
+    # YoC mensal por diferentes grupos
+    cols = st.columns(2)
+    asset = cols[0].selectbox(
+        "Ativo base:",
+        ["Todos"] + state.asset_codes,
+    )
+    date_col = cols[1].selectbox(
+        "Agrupar por data de:",
+        ["payment_date", "hold_date"],
+        format_func=dict(payment_date="Pagamento", hold_date="Custódia").get,
+    )
+    charts.monthly_yoc(state.earning_yield, asset, date_col)
 
-# ==== Proventos por Ativo ====
-st.subheader("Proventos por Ativo", divider="gray")
+    # ==== Proventos por Ativo ====
+    st.subheader("Proventos por Ativo", divider="gray")
 
-# Filtros
-cols = st.columns(5)
-cols[0].selectbox(
-    "Ativo:",
-    ["Todos"] + state.asset_codes,
-    key="filter_asset",
-    on_change=update_state,
-)
-cols[1].pills(
-    "Tipo de provento:",
-    (values := [k.value for k in EarningKind]),
-    selection_mode="multi",
-    default=values,
-    key="filter_earning_kind",
-    on_change=update_state,
-)
-cols[2].selectbox(
-    "Filtrar data de:",
-    ["Pagamento", "Custódia"],
-    key="filter_date_kind",
-    on_change=update_state,
-)
-cols[3].date_input(
-    "Data inicial:",
-    key="filter_start_date",
-    value=date(2000, 1, 1),
-    max_value=date(2050, 1, 1),
-    format=config.ST_DATE_FORMAT,
-    on_change=update_state,
-)
-cols[4].date_input(
-    "Data final:",
-    key="filter_end_date",
-    value="today",
-    format=config.ST_DATE_FORMAT,
-    on_change=update_state,
-)
+    # Filtros
+    cols = st.columns(5)
+    cols[0].selectbox(
+        "Ativo:",
+        ["Todos"] + state.asset_codes,
+        key="filter_asset",
+        on_change=update_state,
+    )
+    cols[1].pills(
+        "Tipo de provento:",
+        (values := [k.value for k in EarningKind]),
+        selection_mode="multi",
+        default=values,
+        key="filter_earning_kind",
+        on_change=update_state,
+    )
+    cols[2].selectbox(
+        "Filtrar data de:",
+        ["Pagamento", "Custódia"],
+        key="filter_date_kind",
+        on_change=update_state,
+    )
+    cols[3].date_input(
+        "Data inicial:",
+        key="filter_start_date",
+        value=date(2000, 1, 1),
+        max_value=date(2050, 1, 1),
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
+    cols[4].date_input(
+        "Data final:",
+        key="filter_end_date",
+        value="today",
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
 
-# Listagem de proventos
-cdf.earning_yield_dataframe(state.filtered_ey)
+    # Listagem de proventos
+    cdf.earning_yield_dataframe(state.filtered_ey)
+else:
+    st.markdown("> Cadastre proventos para acessar o dashboard.")

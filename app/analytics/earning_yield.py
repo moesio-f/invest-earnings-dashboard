@@ -24,6 +24,7 @@ class EarningAnalytics:
         return EarningYield.validate(self._earning_yield())
 
     def _earning_yield(self) -> pd.DataFrame:
+        dtypes = self._model_to_dtypes(EarningYield)
         stmt = (
             sa.select(
                 Earning.id.label("earning_id"),
@@ -43,20 +44,20 @@ class EarningAnalytics:
             .join(Earning.asset)
             .join(Earning.right_to_earnings)
         )
-        df = pd.read_sql(str(stmt.compile(self._engine)), self._engine)
+        df = pd.read_sql(
+            str(stmt.compile(self._engine)),
+            self._engine,
+        )
 
         # Degenerate case:
         if df.empty:
-            schema = EarningYield.to_schema()
-            column_names = list(schema.columns.keys())
-            data_types = {
-                column_name: column_type.dtype.type.name
-                for column_name, column_type in schema.columns.items()
-            }
-            return pd.DataFrame(columns=column_names).astype(data_types)
+            return pd.DataFrame(columns=list(dtypes)).astype(dtypes)
 
         # Data cleansing/filtering
         df = df.drop(columns=["value_per_share__1"])
+        df = df.astype(
+            {c: dtypes[c] if c in dtypes else df.dtypes[c] for c in df.columns}
+        )
 
         # Add new column to hold average_price
         df["avg_price"] = df.shares * df.share_price
@@ -134,3 +135,10 @@ class EarningAnalytics:
         df = df.drop(columns="economic_date")
 
         return df
+
+    def _model_to_dtypes(self, model) -> dict:
+        schema = model.to_schema()
+        return {
+            column_name: column_type.dtype.type.name
+            for column_name, column_type in schema.columns.items()
+        }

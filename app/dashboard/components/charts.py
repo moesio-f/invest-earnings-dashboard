@@ -1,5 +1,6 @@
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import streamlit as st
 from pandera.typing import DataFrame
 
@@ -65,10 +66,15 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
         )
 
 
-def monthly_yoc(df: DataFrame[EarningYield], target_asset: str):
+def monthly_yoc(
+    df: DataFrame[EarningYield],
+    target_asset: str,
+    date_col: str,
+):
+
     # Prepare dataframe
-    df = df[["b3_code", "payment_date", "asset_kind", "yoc"]].copy()
-    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd(0)
+    df = df[["b3_code", date_col, "asset_kind", "yoc"]].copy()
+    df[date_col] = pd.to_datetime(df[date_col]) + pd.offsets.MonthEnd(0)
 
     # Find target asset rows
     is_global = target_asset == "Todos"
@@ -79,14 +85,11 @@ def monthly_yoc(df: DataFrame[EarningYield], target_asset: str):
 
     # Find target YoC
     df_asset = (
-        df_asset.groupby("payment_date")
-        .mean()
-        .reset_index()
-        .assign(asset_kind=target_asset)
+        df_asset.groupby(date_col).mean().reset_index().assign(asset_kind=target_asset)
     )
 
     # Find YoC by asset class
-    df_kind = df.groupby(["payment_date", "asset_kind"]).mean().reset_index()
+    df_kind = df.groupby([date_col, "asset_kind"]).mean().reset_index()
 
     # Maybe target is not global?
     if not is_global:
@@ -94,7 +97,7 @@ def monthly_yoc(df: DataFrame[EarningYield], target_asset: str):
             [
                 df_kind,
                 df.drop(columns="asset_kind")
-                .groupby("payment_date")
+                .groupby(date_col)
                 .mean()
                 .reset_index()
                 .assign(asset_kind="Todos"),
@@ -107,13 +110,13 @@ def monthly_yoc(df: DataFrame[EarningYield], target_asset: str):
     # Show DataFrame with are chart
     fig = px.bar(
         df,
-        x="payment_date",
+        x=date_col,
         y="yoc",
         color="asset_kind",
-        labels=dict(payment_date="Mês", yoc="YoC Médio (%)", asset_kind="Grupo"),
+        labels={date_col: "Mês", "yoc": "YoC Médio (%)", "asset_kind": "Grupo"},
         barmode="group",
     )
-    fig.update_xaxes(tickformat="%b/%Y", dtick="M1")
+    fig.update_xaxes(tickmode="array", tickvals=df[date_col], tickformat="%b/%Y")
     st.plotly_chart(fig)
 
 

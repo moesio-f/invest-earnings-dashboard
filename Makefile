@@ -1,5 +1,5 @@
 # Variáveis
-COMPOSE := ./docker-compose.dev.yaml
+COMPOSE ?= ./docker-compose.dev.yaml
 
 # Recipe padrão
 all: down build up 
