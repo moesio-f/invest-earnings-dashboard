@@ -18,7 +18,7 @@ def earning_global_metrics(
     def _last_months(n: int):
         today = pd.to_datetime(date.today())
         start = today + pd.offsets.MonthBegin(-n)
-        end = today + pd.offsets.MonthEnd()
+        end = today + pd.offsets.MonthEnd(0)
         return _between(start, end)
 
     for container, label, value, help in zip(
@@ -44,7 +44,7 @@ def earning_global_metrics(
             "Quantidade de ativos que possuem proventos.",
             "Total recebido em proventos (recebidos e a receber).",
             "Total a receber de proventos.",
-            "Média dos YoC de cada provento em todo período: `mean(sum(100 * Provento por Unidade / PM Ativo))`.",
+            "Média dos YoC de cada provento (recebido e a receber): `mean(YoC)`.",
             "Média dos YoC de cada provento no mês corrente.",
             "Média dos YoC de cada provento nos últimos 3 meses.",
             "Média dos YoC de cada provento nos últimos 6 meses.",

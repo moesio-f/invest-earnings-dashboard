@@ -10,7 +10,7 @@ from app.api.v1_facade import v1Facade
 from app.dashboard.components import dataframes as cdf
 from app.dashboard.components import form_dialogs as cfd
 from app.dashboard.scoped_state import ScopedState
-from app.db.models import AssetKind, EarningKind, TransactionKind
+from app.db.models import AssetKind, EarningKind, TransactionKind, EconomicIndex
 
 state = ScopedState("settings")
 api = v1Facade()
@@ -49,6 +49,16 @@ def add_earning(data: ScopedState):
         kind=EarningKind.from_value(data.kind()),
     )
     update_state(update_earnings=True, filter_earnings=True)
+
+
+def load_economic_data(data: ScopedState):
+    io = StringIO(data.csv_contents())
+    io.seek(0)
+    data = pd.read_csv(io).to_dict("records")
+    for d in data:
+        d["index"] = EconomicIndex.from_value(d["index"])
+
+    api.load_economic_data(*data)
 
 
 def filter_transactions():
@@ -96,6 +106,7 @@ def update_state(
     update_assets: bool = False,
     update_transactions: bool = False,
     update_earnings: bool = False,
+    update_economic_data: bool = False,
     filter_transactions: bool = False,
     filter_earnings: bool = False,
     *args,
@@ -107,7 +118,7 @@ def update_state(
     # Update assets
     if update_assets or initialize:
         state.assets = api.assets()
-        state.asset_codes = [a.b3_code for a in state.assets]
+        state.asset_codes = list(sorted([a.b3_code for a in state.assets]))
 
     # Update transactions
     if update_transactions or initialize:
@@ -116,6 +127,10 @@ def update_state(
     # Update earnings
     if update_earnings or initialize:
         state.earnings = api.earnings()
+
+    # Update economic data
+    if update_economic_data or initialize:
+        state.economic = api.economic_data()
 
     # Apply filters
     for cond, default, st_key in zip(
@@ -271,4 +286,24 @@ if st.button(
         "Cole no espaço abaixo o conteúdo do arquivo CSV contendo os proventos "
         "a serem importadas. Deve possuir cabeçalho: `asset_b3_code,hold_date,"
         "payment_date,value_per_share,kind,ir_percentage`",
+    )
+
+
+# === Dados Econômicos ===
+st.subheader("Dados Econômicos", divider="gray")
+
+# Listagem
+cdf.economic_data_dataframe(state.economic)
+
+if st.button(
+    "Importar índices econônomicos",
+    icon=":material/file_upload:",
+    help="Importar de arquivo CSV.",
+    use_container_width=True,
+):
+    cfd.text_upload(
+        load_economic_data,
+        "Cole no espaço abaixo o conteúdo do arquivo CSV contendo os proventos "
+        "a serem importadas. Deve possuir cabeçalho: `index,reference_date,"
+        "percentage_change,index_number`",
     )

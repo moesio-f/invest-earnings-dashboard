@@ -8,7 +8,7 @@ from app.analytics.entities import EarningYield
 
 def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
     df = df[["asset_kind", "payment_date", "total_earnings"]].copy()
-    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd()
+    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd(0)
 
     agg = df.groupby(["payment_date", "asset_kind"]).sum().reset_index()
     agg = agg.rename(
@@ -68,7 +68,7 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
 def monthly_yoc(df: DataFrame[EarningYield], target_asset: str):
     # Prepare dataframe
     df = df[["b3_code", "payment_date", "asset_kind", "yoc"]].copy()
-    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd()
+    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd(0)
 
     # Find target asset rows
     is_global = target_asset == "Todos"

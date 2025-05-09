@@ -5,6 +5,7 @@ de um facade.
 
 from datetime import date
 
+import pandas as pd
 import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 from pandera.typing import DataFrame
@@ -17,6 +18,7 @@ from app.db.models import (
     AssetKind,
     Earning,
     EarningKind,
+    EconomicData,
     Transaction,
     TransactionKind,
 )
@@ -121,6 +123,25 @@ class v1Facade:
                 .options(sa_orm.selectinload(Transaction.entitled_to_earnings))
                 .all()
             )
+
+    def load_economic_data(self, *data: dict):
+        data = list(data)
+
+        # Guarantee that reference date is last day
+        #   of the month
+        for d in data:
+            d["reference_date"] = (
+                pd.to_datetime(d["reference_date"]) + pd.offsets.MonthEnd(0)
+            ).date()
+
+        # Add all data to database
+        with sa_orm.Session(self._engine) as session:
+            session.execute(sa.insert(EconomicData), data)
+            session.commit()
+
+    def economic_data(self) -> list[EconomicData]:
+        with sa_orm.Session(self._engine, expire_on_commit=False) as session:
+            return list(session.query(EconomicData).all())
 
     def earning_yield(self) -> DataFrame[EarningYield]:
         return self._analytics.earning_yield

@@ -4,7 +4,7 @@ from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningYield
 from app.config import DASHBOARD_CONFIG as config
-from app.db.models import Asset, Earning, Transaction
+from app.db.models import Asset, Earning, Transaction, EconomicData
 
 
 def asset_dataframe(assets: list[Asset]):
@@ -137,6 +137,42 @@ def earning_dataframe(earnings: list[Earning]):
     )
 
 
+def economic_data_dataframe(economic_data: list[EconomicData]):
+    data = dict(index=[], reference_date=[], percentage_change=[], number_index=[])
+
+    if economic_data:
+        for ed in economic_data:
+            for k in data.keys():
+                # Obter valor do modelo
+                v = getattr(ed, k)
+
+                # Se for um índice, mapear
+                #   pro nome
+                if k == "index":
+                    v = v.value
+
+                # Adicionar dado do ativo
+                data[k].append(v)
+
+    st.dataframe(
+        pd.DataFrame(data).sort_values(["index", "reference_date"]),
+        hide_index=True,
+        column_config={
+            "index": st.column_config.TextColumn("Índice Econômico", pinned=True),
+            "kind": st.column_config.TextColumn("Tipo"),
+            "reference_date": st.column_config.DateColumn(
+                "Mês de Referência", format="MM/YYYY"
+            ),
+            "percentage_change": st.column_config.NumberColumn(
+                "Variação (%)", format="%.2f%%"
+            ),
+            "number_index": st.column_config.NumberColumn(
+                "Número Índice", format="%.3f"
+            ),
+        },
+    )
+
+
 def earning_yield_dataframe(df: DataFrame[EarningYield]):
     st.dataframe(
         df,
@@ -157,7 +193,9 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
         ],
         column_config={
             "b3_code": st.column_config.TextColumn("Código do Ativo (B3)", pinned=True),
-            "asset_kind": st.column_config.TextColumn("Classe do Ativo", help="Classe do ativo."),
+            "asset_kind": st.column_config.TextColumn(
+                "Classe do Ativo", help="Classe do ativo."
+            ),
             "kind": st.column_config.TextColumn("Tipo", help="Tipo de provento."),
             "shares": st.column_config.NumberColumn(
                 "Unidades",
