@@ -34,3 +34,5 @@ class EarningYield(pa.DataFrameModel):
     shares: Series[int] = pa.Field(nullable=False)
     yoc: Series[float] = pa.Field(nullable=False)
     total_earnings: Series[float] = pa.Field(nullable=False)
+    cdi_on_hold_month: Series[float] = pa.Field(nullable=True)
+    ipca_on_hold_month: Series[float] = pa.Field(nullable=True)

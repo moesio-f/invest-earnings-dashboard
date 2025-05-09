@@ -174,6 +174,10 @@ def economic_data_dataframe(economic_data: list[EconomicData]):
 
 
 def earning_yield_dataframe(df: DataFrame[EarningYield]):
+    # Colunas derivadas
+    df = df.copy()
+    df["cdb_yield"] = 0.85 * df.cdi_on_hold_month
+
     st.dataframe(
         df,
         hide_index=True,
@@ -181,7 +185,6 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
             "b3_code",
             "asset_kind",
             "kind",
-            "ir",
             "hold_date",
             "payment_date",
             "shares",
@@ -190,6 +193,9 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
             "ir_adjusted_value_per_share",
             "total_earnings",
             "yoc",
+            "cdb_yield",
+            "cdi_on_hold_month",
+            "ipca_on_hold_month",
         ],
         column_config={
             "b3_code": st.column_config.TextColumn("Código do Ativo (B3)", pinned=True),
@@ -230,11 +236,18 @@ def earning_yield_dataframe(df: DataFrame[EarningYield]):
             **{
                 k: st.column_config.NumberColumn(label, help=help, format="%.2f%%")
                 for k, label, help in zip(
-                    ["ir", "yoc"],
-                    ["Imposto de Renda Retido na Fonte (IRRF)", "Yield on Cost (YoC)"],
+                    ["yoc", "cdb_yield", "cdi_on_hold_month", "ipca_on_hold_month"],
                     [
-                        "Porcentagem de IR sobre o provento.",
+                        "Yield on Cost (YoC)",
+                        "CDB",
+                        "CDI",
+                        "IPCA",
+                    ],
+                    [
                         "Porcentagem de retorno com relação ao preço medio.",
+                        "Rendimento de um CDB 100% do CDI considerando a alíquota de 15%. Conhecido como 'CDI Líquido'.",
+                        "CDI no mês de custódia (proxy com relação a data da compentência).",
+                        "IPCA no mês de custódia (proxy com relação a data da competência).",
                     ],
                 )
             },

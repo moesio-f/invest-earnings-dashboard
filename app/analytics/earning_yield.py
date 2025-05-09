@@ -5,7 +5,14 @@ import sqlalchemy as sa
 from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningYield
-from app.db.models import Earning, Transaction, TransactionKind, Asset
+from app.db.models import (
+    Asset,
+    Earning,
+    EconomicData,
+    EconomicIndex,
+    Transaction,
+    TransactionKind,
+)
 
 
 class EarningAnalytics:
@@ -96,5 +103,34 @@ class EarningAnalytics:
         df = df.drop(columns=["earning_id"])
         for c in ["hold_date", "payment_date"]:
             df[c] = df[c].astype(str).map(date.fromisoformat)
+
+        # Query economic index data for payment date
+        df["economic_date"] = (
+            pd.to_datetime(df.hold_date) + pd.offsets.MonthEnd(0)
+        ).dt.date
+        stmt = (
+            sa.select(
+                EconomicData.index,
+                EconomicData.reference_date.label("economic_date"),
+                EconomicData.percentage_change.label("change"),
+            )
+            .where(EconomicData.index.in_([EconomicIndex.ipca, EconomicIndex.cdi]))
+            .where(EconomicData.reference_date.in_(df.economic_date.unique()))
+        )
+        df_economic = (
+            pd.read_sql(
+                str(
+                    stmt.compile(self._engine, compile_kwargs=dict(literal_binds=True))
+                ),
+                self._engine,
+            )
+            .pivot(index="economic_date", columns="index", values="change")
+            .rename(columns=dict(cdi="cdi_on_hold_month", ipca="ipca_on_hold_month"))
+        )
+
+        # Join DataFrame
+        df.economic_date = df.economic_date.map(lambda d: d.isoformat())
+        df = df.join(df_economic, on="economic_date")
+        df = df.drop(columns="economic_date")
 
         return df
