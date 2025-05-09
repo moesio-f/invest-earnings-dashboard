@@ -97,15 +97,16 @@ with cols[1]:
     charts.earnings_by(state.earning_yield, "b3_code")
 
 # Proventos recebidos e a receber
-st.markdown("### Recebidos no Mês")
-cdf.earning_yield_dataframe(
-    state.current_month_ey[state.current_month_ey.payment_date <= today]
-)
-
-st.markdown("### A Receber no Mês")
-cdf.earning_yield_dataframe(
-    state.current_month_ey[state.current_month_ey.payment_date > today]
-)
+for title, cond in zip(
+    ["Recebidos", "A Receber"],
+    [
+        state.current_month_ey.payment_date <= today,
+        state.current_month_ey.payment_date > today,
+    ],
+):
+    df = state.current_month_ey[cond]
+    st.markdown(f"### {title} no Mês: `R$ {df.total_earnings.sum():.2f}`")
+    cdf.earning_yield_dataframe(df)
 
 # ==== Evolução do YoC ====
 st.subheader("Yield on Cost Médio Mensal", divider="gray")

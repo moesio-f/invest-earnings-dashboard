@@ -14,7 +14,7 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
     agg = agg.rename(
         columns=dict(
             payment_date="Mês",
-            total_earnings="Proventos Recebidos (R$)",
+            total_earnings="Proventos (R$)",
             asset_kind="Classe de Ativo",
         )
     )
@@ -22,7 +22,7 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
     fig = px.bar(
         agg,
         x="Mês",
-        y="Proventos Recebidos (R$)",
+        y="Proventos (R$)",
         color="Classe de Ativo",
     )
     fig.update_xaxes(tickformat="%b/%Y", dtick="M1")
@@ -30,7 +30,7 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
 
     if show_table:
         agg = (
-            agg.rename(columns={"Proventos Recebidos (R$)": "Proventos (R$)"})
+            agg.rename(columns={"Proventos (R$)": "Proventos (R$)"})
             .drop(columns=["Classe de Ativo"])
             .groupby("Mês")
             .sum()
