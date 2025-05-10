@@ -17,3 +17,6 @@ up:
 logs:
 	@docker compose -f ${COMPOSE} logs -f
 
+bash:
+	@docker compose -f ${COMPOSE} exec app bash
+

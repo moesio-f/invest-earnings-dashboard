@@ -3,6 +3,7 @@ services:
     build: .
     environment:
       DB_BACKEND: sqlite
+      DB_BACKUP_PATH: /code/backups
       CONNECTION_STRING: "sqlite:////code/database.db"
       DASHBOARD_PORT: 8080
     ports:

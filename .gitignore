@@ -109,6 +109,7 @@ pyrightconfig.json
 # Python cache 
 __pycache__/
 
-# DuckDB databases
+# Databases
 *.duckdb
 *.db
+bak/

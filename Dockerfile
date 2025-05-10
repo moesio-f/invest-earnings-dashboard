@@ -18,10 +18,14 @@ ENV PYTHONUNBUFFERED=1
 ENV TZ=America/Sao_Paulo
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezon
 
+RUN apt upgrade && apt update && apt install -y cron
+
 WORKDIR /code
 
 COPY --from=builder /venv/ venv/
 COPY app ./app
 COPY --chmod=775 scripts/* ./scripts/
 
-ENTRYPOINT ["./scripts/run.sh", "./scripts/run_alembic.sh", "./scripts/start_dashboard.sh"]
+RUN printenv | grep -v "no_proxy" >> /etc/environment && touch /var/log/db_backup.log && crontab scripts/backup_cron
+
+ENTRYPOINT ["./scripts/run.sh"]

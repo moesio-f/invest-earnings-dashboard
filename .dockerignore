@@ -2,7 +2,7 @@
 *
 
 # Add scripts
-!scripts/**/*.sh
+!scripts/**/*
 
 # Add requirements
 !requirements.txt
