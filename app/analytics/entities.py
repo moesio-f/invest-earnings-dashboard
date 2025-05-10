@@ -3,6 +3,7 @@ resultados de análises
 no banco da aplicação.
 """
 
+from dataclasses import dataclass
 from datetime import date
 
 import pandera as pa
@@ -36,3 +37,28 @@ class EarningYield(pa.DataFrameModel):
     total_earnings: Series[float] = pa.Field(nullable=False)
     cdi_on_hold_month: Series[float] = pa.Field(nullable=True)
     ipca_on_hold_month: Series[float] = pa.Field(nullable=True)
+
+
+class MonthlyEarning(pa.DataFrameModel):
+    reference_date: Series[date] = pa.Field(nullable=False)
+    total_earnings: Series[float] = pa.Field(nullable=False)
+    group: Series[str] = pa.Field(nullable=False)
+
+
+class MonthlyYoC(pa.DataFrameModel):
+    reference_date: Series[date] = pa.Field(nullable=False)
+    yoc: Series[float] = pa.Field(nullable=False)
+    group: Series[str] = pa.Field(nullable=False)
+
+
+@dataclass(frozen=True)
+class EarningMetrics:
+    n_assets_with_earnings: int
+    total_earnings: float
+    collected_earnings: float
+    to_collect_earnings: float
+    mean_yoc: float
+    mean_yoc_current_month: float
+    mean_yoc_3m: float
+    mean_yoc_6m: float
+    mean_yoc_12m: float

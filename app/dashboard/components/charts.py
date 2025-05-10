@@ -1,46 +1,38 @@
+"""Gráficos para visualização
+de entidades.
+"""
+
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 from pandera.typing import DataFrame
 
-from app.analytics.entities import EarningYield
+from app.analytics.entities import EarningYield, MonthlyEarning, MonthlyYoC
 
 
-def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
-    df = df[["asset_kind", "payment_date", "total_earnings"]].copy()
-    df["payment_date"] = pd.to_datetime(df.payment_date) + pd.offsets.MonthEnd(0)
-
-    agg = df.groupby(["payment_date", "asset_kind"]).sum().reset_index()
-    agg = agg.rename(
+def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):
+    df = df.rename(
         columns=dict(
-            payment_date="Mês",
+            reference_date="Mês",
             total_earnings="Proventos (R$)",
-            asset_kind="Classe de Ativo",
+            group="Grupo",
         )
     )
-
     fig = px.bar(
-        agg,
+        df,
         x="Mês",
         y="Proventos (R$)",
-        color="Classe de Ativo",
+        color="Grupo",
     )
-    fig.update_xaxes(tickformat="%b/%Y", dtick="M1")
+    fig.update_xaxes(tickmode="array", tickvals=df["Mês"], tickformat="%b/%Y")
     st.plotly_chart(fig)
 
     if show_table:
-        agg = (
-            agg.rename(columns={"Proventos (R$)": "Proventos (R$)"})
-            .drop(columns=["Classe de Ativo"])
-            .groupby("Mês")
-            .sum()
-            .reset_index()
-        )
-        agg["date"] = agg["Mês"]
-        agg["Ano"] = agg["Mês"].dt.year
-        agg["Mês"] = agg["Mês"].dt.month.map(
-            {
+        df = df.drop(columns=["Grupo"]).groupby("Mês").sum().reset_index()
+        df["date"] = pd.to_datetime(df["Mês"])
+        df["Ano"] = df["Mês"].map(lambda d: d.year)
+        df["Mês"] = df["Mês"].map(
+            lambda d: {
                 1: "Janeiro",
                 2: "Fevereiro",
                 3: "Março",
@@ -53,11 +45,11 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
                 10: "Outubro",
                 11: "Novembro",
                 12: "Dezembro",
-            }
+            }[d.month]
         )
 
         st.dataframe(
-            agg.pivot_table(index=["Ano", "Mês"], values=["date", "Proventos (R$)"])
+            df.pivot_table(index=["Ano", "Mês"], values=["date", "Proventos (R$)"])
             .sort_values("date")
             .drop(columns=["date"]),
             column_config={
@@ -67,56 +59,20 @@ def monthly_earnings(df: DataFrame[EarningYield], show_table: bool = False):
 
 
 def monthly_yoc(
-    df: DataFrame[EarningYield],
-    target_asset: str,
-    date_col: str,
+    df: DataFrame[MonthlyYoC],
 ):
-
-    # Prepare dataframe
-    df = df[["b3_code", date_col, "asset_kind", "yoc"]].copy()
-    df[date_col] = pd.to_datetime(df[date_col]) + pd.offsets.MonthEnd(0)
-
-    # Find target asset rows
-    is_global = target_asset == "Todos"
-    df_asset = (df if is_global else df[df.b3_code == target_asset]).drop(
-        columns=["asset_kind", "b3_code"]
-    )
-    df = df.drop(columns="b3_code")
-
-    # Find target YoC
-    df_asset = (
-        df_asset.groupby(date_col).mean().reset_index().assign(asset_kind=target_asset)
-    )
-
-    # Find YoC by asset class
-    df_kind = df.groupby([date_col, "asset_kind"]).mean().reset_index()
-
-    # Maybe target is not global?
-    if not is_global:
-        df_kind = pd.concat(
-            [
-                df_kind,
-                df.drop(columns="asset_kind")
-                .groupby(date_col)
-                .mean()
-                .reset_index()
-                .assign(asset_kind="Todos"),
-            ]
-        )
-
-    # Unify DataFrame
-    df = pd.concat([df_kind, df_asset])
-
     # Show DataFrame with are chart
     fig = px.bar(
         df,
-        x=date_col,
+        x="reference_date",
         y="yoc",
-        color="asset_kind",
-        labels={date_col: "Mês", "yoc": "YoC Médio (%)", "asset_kind": "Grupo"},
+        color="group",
+        labels={"reference_date": "Mês", "yoc": "YoC Médio (%)", "group": "Grupo"},
         barmode="group",
     )
-    fig.update_xaxes(tickmode="array", tickvals=df[date_col], tickformat="%b/%Y")
+    fig.update_xaxes(
+        tickmode="array", tickvals=df["reference_date"], tickformat="%b/%Y"
+    )
     st.plotly_chart(fig)
 
 

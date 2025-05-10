@@ -2,16 +2,15 @@ from datetime import date
 
 import streamlit as st
 
-from app.api.v1_facade import v1Facade
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.components import charts
 from app.dashboard.components import dataframes as cdf
 from app.dashboard.components import metrics as cme
+from app.dashboard.api import api
 from app.dashboard.scoped_state import ScopedState
 from app.db.models import AssetKind, EarningKind
 
 state = ScopedState("home")
-api = v1Facade()
 today = date.today()
 
 
@@ -77,10 +76,10 @@ st.title("Análise de Proventos")
 # Caso existam proventos, exibir
 if state.asset_codes:
     # Métricas
-    cme.earning_global_metrics(state.earning_yield)
+    cme.earning_global_metrics(api.earning_metrics())
 
     # Gráfico de proventos por mês
-    charts.monthly_earnings(state.earning_yield, show_table=True)
+    charts.monthly_earnings(api.monthly_earning(), show_table=True)
 
     # ==== Posição Atual ====
     st.subheader("Posição Atual", divider="gray")
@@ -115,14 +114,15 @@ if state.asset_codes:
     cols = st.columns(2)
     asset = cols[0].selectbox(
         "Ativo base:",
-        ["Todos"] + state.asset_codes,
+        [None] + state.asset_codes,
+        format_func=lambda a: "Todos" if not a else a,
     )
     date_col = cols[1].selectbox(
         "Agrupar por data de:",
         ["payment_date", "hold_date"],
         format_func=dict(payment_date="Pagamento", hold_date="Custódia").get,
     )
-    charts.monthly_yoc(state.earning_yield, asset, date_col)
+    charts.monthly_yoc(api.monthly_yoc(asset, date_col))
 
     # ==== Proventos por Ativo ====
     st.subheader("Proventos por Ativo", divider="gray")

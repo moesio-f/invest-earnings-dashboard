@@ -10,8 +10,13 @@ import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 from pandera.typing import DataFrame
 
-from app.analytics.earning_yield import EarningAnalytics
-from app.analytics.entities import EarningYield
+from app.analytics.engine import AnalyticsEngine
+from app.analytics.entities import (
+    EarningMetrics,
+    EarningYield,
+    MonthlyEarning,
+    MonthlyYoC,
+)
 from app.config import DB_CONFIG
 from app.db.models import (
     Asset,
@@ -19,19 +24,19 @@ from app.db.models import (
     Earning,
     EarningKind,
     EconomicData,
+    EconomicIndex,
     Transaction,
     TransactionKind,
-    EconomicIndex,
 )
 
 
-class v1Facade:
+class APIv1:
     def __init__(self, db: str = None):
         if db is None:
             db = DB_CONFIG.connection_string
 
         self._engine = sa.create_engine(db)
-        self._analytics = EarningAnalytics(self._engine)
+        self._analytics = AnalyticsEngine(self._engine)
 
     def create_asset(
         self, b3_code: str, name: str, description: str, kind: AssetKind, added: date
@@ -160,8 +165,17 @@ class v1Facade:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
             return list(session.query(EconomicData).all())
 
+    def earning_metrics(self) -> EarningMetrics:
+        return self._analytics.earning_metrics()
+
     def earning_yield(self) -> DataFrame[EarningYield]:
-        return self._analytics.earning_yield
+        return self._analytics.earning_yield()
+
+    def monthly_earning(self) -> DataFrame[MonthlyEarning]:
+        return self._analytics.monthly_earning()
+
+    def monthly_yoc(self, target_asset: str, date_col: str) -> DataFrame[MonthlyYoC]:
+        return self._analytics.monthly_yoc(target_asset, date_col)
 
     def _update_earning_rights(
         self,

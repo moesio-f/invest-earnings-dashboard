@@ -6,14 +6,13 @@ from typing import Callable
 import pandas as pd
 import streamlit as st
 
-from app.api.v1_facade import v1Facade
+from app.dashboard.api import api
 from app.dashboard.components import dataframes as cdf
 from app.dashboard.components import form_dialogs as cfd
 from app.dashboard.scoped_state import ScopedState
-from app.db.models import AssetKind, EarningKind, TransactionKind, EconomicIndex
+from app.db.models import AssetKind, EarningKind, EconomicIndex, TransactionKind
 
 state = ScopedState("settings")
-api = v1Facade()
 
 
 # === Funções utilitárias ===

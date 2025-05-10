@@ -4,28 +4,18 @@ import pandas as pd
 import streamlit as st
 from pandera.typing import DataFrame
 
-from app.analytics.entities import EarningYield
+from app.analytics.entities import EarningMetrics
 
 
 def earning_global_metrics(
-    df: DataFrame[EarningYield],
+    metrics: EarningMetrics,
 ):
-    dt = pd.to_datetime(df.payment_date)
-
-    def _between(start, end):
-        return df[(dt >= start) & (dt <= end)]
-
-    def _last_months(n: int):
-        today = pd.to_datetime(date.today())
-        start = today + pd.offsets.MonthBegin(-n)
-        end = today + pd.offsets.MonthEnd(0)
-        return _between(start, end)
 
     for container, label, value, help in zip(
         [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
         [
             "Ativos com Proventos",
-            "Total de Proventos",
+            "Proventos Recebidos",
             "Proventos a Receber",
             "YoC Médio",
             "YoC Médio (1M)",
@@ -34,11 +24,14 @@ def earning_global_metrics(
             "Yoc Médio (12M)",
         ],
         [
-            df.b3_code.nunique(),
-            f"R$ {df.total_earnings.sum():.2f}",
-            f"R$ {df[df.payment_date > date.today()].total_earnings.sum():.2f}",
-            f"{df.yoc.mean():.2f}%",
-            *[f"{_last_months(n).yoc.mean():.2f}%" for n in (1, 3, 6, 12)],
+            metrics.n_assets_with_earnings,
+            f"R$ {metrics.collected_earnings:.2f}",
+            f"R$ {metrics.to_collect_earnings:.2f}",
+            f"{metrics.mean_yoc:.2f}%",
+            *[
+                f"{getattr(metrics, f'mean_yoc_{k}'):.2f}%"
+                for k in ["current_month", "3m", "6m", "12m"]
+            ],
         ],
         [
             "Quantidade de ativos que possuem proventos.",
