@@ -15,6 +15,7 @@ from app.analytics.entities import (
     EarningMetrics,
     EarningYield,
     MonthlyEarning,
+    MonthlyIndexYoC,
     MonthlyYoC,
 )
 from app.config import DB_CONFIG
@@ -176,6 +177,11 @@ class APIv1:
 
     def monthly_yoc(self, target_asset: str, date_col: str) -> DataFrame[MonthlyYoC]:
         return self._analytics.monthly_yoc(target_asset, date_col)
+
+    def monthly_index_yoc(
+        self, target_asset: str, date_col: str
+    ) -> DataFrame[MonthlyIndexYoC]:
+        return self._analytics.monthly_index_yoc(target_asset, date_col)
 
     def _update_earning_rights(
         self,

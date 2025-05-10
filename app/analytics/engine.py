@@ -10,6 +10,7 @@ from app.analytics.entities import (
     EarningMetrics,
     EarningYield,
     MonthlyEarning,
+    MonthlyIndexYoC,
     MonthlyYoC,
 )
 from app.db.models import (
@@ -55,6 +56,17 @@ class AnalyticsEngine:
             **{f"mean_yoc_{n}m": _last_months(n).yoc.mean() for n in [3, 6, 12]},
         )
 
+    def monthly_index_yoc(
+        self, target_asset: str = None, date_col: str = "payment_date"
+    ):
+        return self._get_and_validate(
+            f"monthly_index_yoc_{target_asset}_{date_col}",
+            MonthlyIndexYoC,
+            self._monthly_index_yoc,
+            target_asset,
+            date_col,
+        )
+
     def monthly_yoc(self, target_asset: str = None, date_col: str = "payment_date"):
         return self._get_and_validate(
             f"monthly_yoc_{target_asset}_{date_col}",
@@ -85,6 +97,38 @@ class AnalyticsEngine:
     ):
         value = self._get_from_cache(key, create_fn, *create_args, **create_kwargs)
         return model.validate(value)
+
+    def _monthly_index_yoc(self, target_asset: str, date_col: str) -> pd.DataFrame:
+        # Fetch YoC
+        yoc = self.monthly_yoc(target_asset, date_col)
+        yoc["date"] = pd.to_datetime(yoc.reference_date)
+
+        # Fetch economic data
+        stmt = (
+            sa.select(
+                EconomicData.index,
+                EconomicData.reference_date.label("date"),
+                EconomicData.percentage_change.label("change"),
+            )
+            .where(EconomicData.index.in_([EconomicIndex.ipca, EconomicIndex.cdi]))
+            .where(EconomicData.reference_date.in_(yoc.reference_date.unique()))
+        )
+        economic = pd.read_sql(
+            str(stmt.compile(self._engine, compile_kwargs=dict(literal_binds=True))),
+            self._engine,
+        ).pivot(index="date", columns="index", values="change")
+        economic["cdb"] = 0.85 * economic.cdi
+        economic.index = pd.to_datetime(economic.index)
+
+        # Join DataFrames
+        df = yoc.join(economic, on="date").drop(columns="date")
+
+        # Fill NaNs with zeroes
+        cols = ["cdi", "cdb", "ipca"]
+        df.loc[:, cols] = df[cols].fillna(0.0)
+
+        # Return df
+        return df
 
     def _monthly_yoc(self, target_asset: str = None, date_col: str = "payment_date"):
         df = self.earning_yield()[["b3_code", date_col, "asset_kind", "yoc"]].rename(
@@ -278,7 +322,7 @@ class AnalyticsEngine:
     ):
         # Should invalidate cache?
         db_meta = self._db_state()
-        cache_meta = self._cache.get("__db_meta")
+        cache_meta = self._cache.get("__db_meta", None)
         if db_meta != cache_meta:
             for k in self._cache:
                 del self._cache[k]

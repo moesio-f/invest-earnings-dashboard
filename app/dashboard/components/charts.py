@@ -7,7 +7,12 @@ import plotly.express as px
 import streamlit as st
 from pandera.typing import DataFrame
 
-from app.analytics.entities import EarningYield, MonthlyEarning, MonthlyYoC
+from app.analytics.entities import (
+    EarningYield,
+    MonthlyEarning,
+    MonthlyYoC,
+    MonthlyIndexYoC,
+)
 
 
 def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):
@@ -70,6 +75,35 @@ def monthly_yoc(
         labels={"reference_date": "Mês", "yoc": "YoC Médio (%)", "group": "Grupo"},
         barmode="group",
     )
+    fig.update_xaxes(
+        tickmode="array", tickvals=df["reference_date"], tickformat="%b/%Y"
+    )
+    st.plotly_chart(fig)
+
+
+def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], relative: bool):
+    cols = ["Yield on Cost (YoC)", "CDI", "CDI Líquido", "IPCA"]
+    if relative:
+        df = df.copy()
+        cols.pop(0)
+        for c in ["cdi", "ipca", "cdb"]:
+            df.loc[:, [c]] = df.yoc - df[c]
+
+    fig = px.bar(
+        df.rename(
+            columns=dict(
+                reference_date="Mês",
+                yoc="Yield on Cost (YoC)",
+                cdi="CDI",
+                ipca="IPCA",
+                cdb="CDI Líquido",
+            )
+        ),
+        x="Mês",
+        y=cols,
+        barmode="group",
+    )
+    fig.update_yaxes(title="Variação (%)")
     fig.update_xaxes(
         tickmode="array", tickvals=df["reference_date"], tickformat="%b/%Y"
     )

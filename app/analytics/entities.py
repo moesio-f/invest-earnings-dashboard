@@ -51,6 +51,12 @@ class MonthlyYoC(pa.DataFrameModel):
     group: Series[str] = pa.Field(nullable=False)
 
 
+class MonthlyIndexYoC(MonthlyYoC):
+    cdi: Series[float] = pa.Field(nullable=False)
+    ipca: Series[float] = pa.Field(nullable=False)
+    cdb: Series[float] = pa.Field(nullable=False)
+
+
 @dataclass(frozen=True)
 class EarningMetrics:
     n_assets_with_earnings: int

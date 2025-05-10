@@ -17,6 +17,11 @@ pg = st.navigation(
     [
         st.Page("pages/home.py", title="Home", icon=":material/home:"),
         st.Page(
+            "pages/economic_index.py",
+            title="Rentabilidade vs Indicadores",
+            icon=":material/monitoring:",
+        ),
+        st.Page(
             "pages/settings.py",
             title="Configurações",
             icon=":material/settings:",
