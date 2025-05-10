@@ -117,6 +117,7 @@ class AnalyticsEngine:
                 [
                     df_groups,
                     df.drop(columns=["b3_code", "group"])
+                    .groupby("reference_date")
                     .mean()
                     .reset_index()
                     .assign(group="Todos"),
@@ -124,8 +125,9 @@ class AnalyticsEngine:
             )
 
         # Concat DataFrames and set dtypes
-        df = pd.concat([df_target, df_groups]).sort_values("reference_date")
+        df = pd.concat([df_groups, df_target])
         df["reference_date"] = df.reference_date.dt.date
+
         return df
 
     def _monthly_earning(
