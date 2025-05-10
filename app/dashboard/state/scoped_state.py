@@ -1,5 +1,5 @@
-"""Classe para gerenciamento
-de estados com escopos.
+"""Estados com
+escopo.
 """
 
 from __future__ import annotations
@@ -7,17 +7,9 @@ from __future__ import annotations
 import streamlit as st
 
 
-class ProxiedGlobal:
-    def __init__(self, key: str):
-        self._key = key
-
-    def __call__(self):
-        return st.session_state[self._key]
-
-
 class ScopedState:
     def __init__(self, scope: str):
-        self.scope = f"state_manager.{scope}"
+        self.scope = scope
         if self.scope not in st.session_state:
             st.session_state[self.scope] = dict()
 
@@ -29,6 +21,10 @@ class ScopedState:
 
     def clear(self):
         st.session_state[self.scope] = dict()
+
+    def remove(self):
+        self.clear()
+        del st.session_state[self.scope]
 
     def __getitem__(self, key):
         return st.session_state[self.scope][key]
@@ -57,26 +53,3 @@ class ScopedState:
 
     def __contains__(self, key) -> bool:
         return key in st.session_state[self.scope]
-
-    @classmethod
-    def exists(cls, scope: str) -> bool:
-        return scope in st.session_state
-
-    @classmethod
-    def clear_scopes(
-        cls, keep: str | list[str] = None, keep_no_initialize: bool = False
-    ):
-        if keep is None:
-            keep = []
-
-        if isinstance(keep, str):
-            keep = [keep]
-
-        for k in st.session_state:
-            if "state_manager." in k:
-                if not any(name in k for name in keep):
-                    has_initialize = any(
-                        "initialized" in item for item in st.session_state[k]
-                    )
-                    if has_initialize or not keep_no_initialize:
-                        del st.session_state[k]

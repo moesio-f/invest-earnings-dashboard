@@ -1,8 +1,4 @@
-from datetime import date
-
-import pandas as pd
 import streamlit as st
-from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningMetrics
 

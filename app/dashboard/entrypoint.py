@@ -27,9 +27,9 @@ pg = st.navigation(
 
 # Maybe clear state on page change
 if config.CLEAR_STATE_ON_PAGE_CHANGE:
-    from app.dashboard.scoped_state import ScopedState
+    from app.dashboard.state import Manager
 
-    ScopedState.clear_scopes(keep_no_initialize=True)
+    Manager.clear_pages(destroy=True)
 
 # Run selected page
 pg.run()

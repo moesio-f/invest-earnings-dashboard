@@ -3,14 +3,14 @@ from datetime import date
 import streamlit as st
 
 from app.config import DASHBOARD_CONFIG as config
+from app.dashboard.api import api
 from app.dashboard.components import charts
 from app.dashboard.components import dataframes as cdf
 from app.dashboard.components import metrics as cme
-from app.dashboard.api import api
-from app.dashboard.scoped_state import ScopedState
+from app.dashboard.state import Manager
 from app.db.models import AssetKind, EarningKind
 
-state = ScopedState("home")
+state = Manager.get_page_state("home")
 today = date.today()
 
 
