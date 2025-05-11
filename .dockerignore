@@ -7,6 +7,9 @@
 # Add requirements
 !requirements.txt
 
+# Add bootstrap data
+!data/*.parquet
+
 # Add Python files in app
 !app/**/*.py
 

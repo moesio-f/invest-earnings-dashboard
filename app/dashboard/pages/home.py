@@ -26,12 +26,11 @@ def update_state():
     # Is page initialized?
     initialize = not state.get("initialized", False)
 
-    if initialize:
-        state.metrics = api.earning_metrics()
-
     # Maybe update earning yield and others
     if initialize:
         # API Queries
+        state.has_economic = len(api.economic_data()) > 0
+        state.metrics = api.earning_metrics()
         state.earning_yield = api.earning_yield()
         state.earning_yield["kind"] = state.earning_yield.kind.map(
             lambda k: EarningKind.from_value(k).value
@@ -118,7 +117,7 @@ update_state()
 st.title("Análise de Proventos")
 
 # Caso existam proventos, exibir
-if state.asset_codes:
+if state.asset_codes and state.has_economic:
     # Métricas
     cme.earning_global_metrics(state.metrics)
 
@@ -236,4 +235,4 @@ if state.asset_codes:
     # Listagem de proventos
     cdf.earning_yield_dataframe(state.filtered_ey)
 else:
-    st.markdown("> Cadastre proventos para acessar o dashboard.")
+    st.markdown("> Cadastre proventos e índices ecônomicos para acessar o dashboard.")

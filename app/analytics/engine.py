@@ -308,6 +308,12 @@ class AnalyticsEngine:
         df = df.join(df_economic, on="economic_date")
         df = df.drop(columns="economic_date")
 
+        # Maybe df_economic was empty for the target dates, we should ensure
+        #   cdi and ipca appear as None
+        for c in ["cdi_on_hold_month", "ipca_on_hold_month"]:
+            if c not in df.columns:
+                df[c] = float("nan")
+
         return df
 
     def _model_to_dtypes(self, model) -> dict:
@@ -324,7 +330,8 @@ class AnalyticsEngine:
         db_meta = self._db_state()
         cache_meta = self._cache.get("__db_meta", None)
         if db_meta != cache_meta:
-            for k in self._cache:
+            keys = list(self._cache)
+            for k in keys:
                 del self._cache[k]
             self._cache["__db_meta"] = db_meta
 

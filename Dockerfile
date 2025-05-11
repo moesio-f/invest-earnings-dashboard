@@ -23,6 +23,7 @@ RUN apt upgrade && apt update && apt install -y cron
 WORKDIR /code
 
 COPY --from=builder /venv/ venv/
+COPY data ./data/bootstrap/
 COPY app ./app
 COPY --chmod=775 scripts/* ./scripts/
 

@@ -23,8 +23,7 @@ def parquet_backup(db: str = None, output_path: str = None):
     output_path = DB_CONFIG.db_backup_path if output_path is None else output_path
     if output_path is None:
         LOGGER.warning(
-            "[DB][BACKUP] Output path for backups not set (`DB_BACKUP_PATH`) "
-            "skipping routine."
+            "Output path for backups not set (`DB_BACKUP_PATH`) skipping routine."
         )
         return
 

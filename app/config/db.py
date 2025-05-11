@@ -17,6 +17,7 @@ class SupportedDatabases(Enum):
 class DatabaseConfig(BaseSettings):
     db_backend: SupportedDatabases = SupportedDatabases.SQLITE
     db_backup_path: Optional[Path] = None
+    db_bootstrap_data_path: Optional[Path] = None
     connection_string: str = "sqlite:////local.db"
 
     @pydantic.model_validator(mode="after")

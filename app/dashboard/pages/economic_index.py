@@ -16,6 +16,7 @@ def update_state():
     initialize = not state.get("initialized", False)
 
     if initialize:
+        state.has_economic = len(api.economic_data()) > 0
         state.asset_codes = list(sorted(set(e.asset_b3_code for e in api.earnings())))
         state.initialized = True
 
@@ -27,7 +28,7 @@ update_state()
 st.title("Yield on Cost (YoC) vs Indicadores Ecônomicos")
 
 # Caso existam proventos, exibir
-if state.asset_codes:
+if state.asset_codes and state.has_economic:
     cols = st.columns(2)
     date_col = cols[0].selectbox(
         "Agrupar por data de:",
@@ -48,4 +49,4 @@ if state.asset_codes:
         relative_bars,
     )
 else:
-    st.markdown("> Cadastre proventos para acessar o dashboard.")
+    st.markdown("> Cadastre proventos e índices ecônomicos para acessar o dashboard.")
