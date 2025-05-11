@@ -95,7 +95,8 @@ def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative
     if relative:
         df = df.copy()
         cols.pop(0)
-        df.loc[:, numeric_cols] = df.yoc - df[numeric_cols]
+        for c in numeric_cols:
+            df[c] = df.yoc - df[c]
 
     if cumulative:
         df.loc[:, numeric_cols] = df[numeric_cols].cumsum()

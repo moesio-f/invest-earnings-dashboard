@@ -2,6 +2,7 @@ from datetime import date
 
 import streamlit as st
 
+from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.api import api
 from app.dashboard.components import charts
 from app.dashboard.state import Manager
@@ -17,7 +18,11 @@ def update_state():
 
     if initialize:
         state.has_economic = len(api.economic_data()) > 0
-        state.asset_codes = list(sorted(set(e.asset_b3_code for e in api.earnings())))
+        cols = ["hold_date", "payment_date"]
+        earning_yield = api.earning_yield()
+        state.asset_codes = earning_yield.b3_code.unique().tolist()
+        state.min_date = earning_yield[cols].min(axis=None)
+        state.max_date = earning_yield[cols].max(axis=None)
         state.initialized = True
 
 
@@ -29,7 +34,7 @@ st.title("Yield on Cost (YoC) vs Indicadores Ecônomicos")
 
 # Caso existam proventos, exibir
 if state.asset_codes and state.has_economic:
-    cols = st.columns(2)
+    cols = st.columns(4)
     date_col = cols[0].selectbox(
         "Agrupar por data de:",
         ["hold_date", "payment_date"],
@@ -39,11 +44,28 @@ if state.asset_codes and state.has_economic:
         "Ativo:",
         ["Todos"] + state.asset_codes,
     )
+    start_date = cols[2].date_input(
+        "Data inicial:",
+        value=state.min_date,
+        max_value=state.max_date,
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
+    end_date = cols[3].date_input(
+        "Data final:",
+        value=state.max_date,
+        max_value=state.max_date,
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
+
     cumulative = st.toggle("Cumulativo", value=False)
     relative_bars = st.toggle("Valores relativos", value=False)
     charts.bar_yoc_variation(
         (df := api.monthly_index_yoc(asset if asset != "Todos" else None, date_col))[
-            df.group == asset
+            (df.group == asset)
+            & (df.reference_date >= start_date)
+            & (df.reference_date <= end_date)
         ],
         cumulative,
         relative_bars,
