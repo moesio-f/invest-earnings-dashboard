@@ -10,18 +10,28 @@ from app.dashboard.components import metrics as cme
 from app.dashboard.state import Manager
 from app.db.models import AssetKind, EarningKind
 
+# Estados da página
 state = Manager.get_page_state("home")
-today = date.today()
+state.today = date.today()
+section_prefix = "__home_{}"
+section_component_prefix = section_prefix + "_{}"
+section_data_proxy = {
+    name: Manager.get_proxied_data_state(name, section_prefix.format(name))
+    for name in ["monthly_yoc", "earnings_by_asset"]
+}
 
 
 # === Inicializando estado de página ===
-def update_state(update_earning_yield: bool = False):
+def update_state():
     # Is page initialized?
     initialize = not state.get("initialized", False)
 
+    if initialize:
+        state.metrics = api.earning_metrics()
+
     # Maybe update earning yield and others
-    state.earning_yield = state.get("_earning_yield", None)
-    if state.earning_yield is None or update_earning_yield:
+    if initialize:
+        # API Queries
         state.earning_yield = api.earning_yield()
         state.earning_yield["kind"] = state.earning_yield.kind.map(
             lambda k: EarningKind.from_value(k).value
@@ -29,42 +39,76 @@ def update_state(update_earning_yield: bool = False):
         state.earning_yield["asset_kind"] = state.earning_yield.asset_kind.map(
             lambda k: AssetKind.from_value(k).value
         )
+
+        # Get asset codes
         state.asset_codes = state.earning_yield.b3_code.unique().tolist()
 
+        # Get minimum and max dates
+        cols = ["hold_date", "payment_date"]
+        state.min_date = state.earning_yield[cols].min(axis=None)
+        state.max_date = state.earning_yield[cols].max(axis=None)
+
+        # Get current month ey
+        state.current_month_ey = state.earning_yield[
+            state.earning_yield.payment_date.map(
+                lambda d: (d.month == state.today.month)
+                and (d.year == state.today.year)
+            )
+        ]
+
+        # Set initialized flag
+        state.initialized = True
+
+    # === Section `mean_yoc` query/filtering ===
+    section = section_data_proxy.get("monthly_yoc", dict())
+    asset = section.get("filter_asset", lambda: "Todos")()
+    date_col = section.get("filter_date_col", lambda: "payment_date")()
+
+    # Avoid re-query whenever possible
+    if asset != state.get("monthly_yoc_asset", None) or date_col != state.get(
+        "monthly_yoc_date_col", None
+    ):
+        if asset == "Todos":
+            asset = None
+
+        state.monthly_yoc = api.monthly_yoc(asset, date_col)
+        state.monthly_yoc_asset = asset
+        state.monthly_yoc_date_col = date_col
+
     # Filter
+    min_date = section.get("filter_start_date", lambda: state.min_date)()
+    max_date = section.get("filter_end_date", lambda: state.max_date)()
+    state.filtered_monthly_yoc = (df := state.monthly_yoc)[
+        (df.reference_date >= min_date) & (df.reference_date <= max_date)
+    ]
+
+    # === Section `earnings_by_asset` filtering ===
     df = state.earning_yield
+    section = section_data_proxy.get("earnings_by_asset", dict())
     if (
         not df.empty
-        and (asset := st.session_state.get("filter_asset", "Todos")) != "Todos"
+        and (asset := section.get("filter_asset", lambda: "Todos")()) != "Todos"
     ):
         df = df[df.b3_code == asset]
 
     if not df.empty:
-        kind = st.session_state.get(
-            "filter_earning_kind", [k.value for k in EarningKind]
-        )
+        kind = section.get(
+            "filter_earning_kind", lambda: [k.value for k in EarningKind]
+        )()
         df = df[df.kind.isin(kind)]
 
     if not df.empty:
         dcol = {"Pagamento": "payment_date", "Custódia": "hold_date"}[
-            st.session_state.get("filter_date_kind", "Pagamento")
+            section.get("filter_date_kind", lambda: "Pagamento")()
         ]
-        ds, de = st.session_state.get(
-            "filter_start_date", date(2000, 1, 1)
-        ), st.session_state.get("filter_end_date", date.today())
+        ds, de = (
+            section.get("filter_start_date", lambda: state.min_date)(),
+            section.get("filter_end_date", lambda: state.max_date)(),
+        )
         df = df[(df[dcol] >= ds) & (df[dcol] <= de)]
 
     # Make the filtered version available
     state.filtered_ey = df
-    state.current_month_ey = state.earning_yield[
-        state.earning_yield.payment_date.map(
-            lambda d: (d.month == today.month) and (d.year == today.year)
-        )
-    ]
-
-    # If we initialized, set flag
-    if initialize:
-        state.initialized = True
 
 
 update_state()
@@ -76,7 +120,7 @@ st.title("Análise de Proventos")
 # Caso existam proventos, exibir
 if state.asset_codes:
     # Métricas
-    cme.earning_global_metrics(api.earning_metrics())
+    cme.earning_global_metrics(state.metrics)
 
     # Gráfico de proventos por mês
     charts.monthly_earnings(api.monthly_earning(), show_table=True)
@@ -99,8 +143,8 @@ if state.asset_codes:
     for title, cond in zip(
         ["Recebidos", "A Receber"],
         [
-            state.current_month_ey.payment_date <= today,
-            state.current_month_ey.payment_date > today,
+            state.current_month_ey.payment_date <= state.today,
+            state.current_month_ey.payment_date > state.today,
         ],
     ):
         df = state.current_month_ey[cond]
@@ -109,30 +153,53 @@ if state.asset_codes:
 
     # ==== Evolução do YoC ====
     st.subheader("Yield on Cost Médio Mensal", divider="gray")
+    section = "monthly_yoc"
 
     # YoC mensal por diferentes grupos
-    cols = st.columns(2)
-    asset = cols[0].selectbox(
+    cols = st.columns(4)
+    cols[0].selectbox(
         "Ativo base:",
-        [None] + state.asset_codes,
-        format_func=lambda a: "Todos" if not a else a,
+        ["Todos"] + state.asset_codes,
+        key=section_component_prefix.format(section, "filter_asset"),
     )
-    date_col = cols[1].selectbox(
+    cols[1].selectbox(
         "Agrupar por data de:",
         ["payment_date", "hold_date"],
+        key=section_component_prefix.format(section, "filter_date_col"),
         format_func=dict(payment_date="Pagamento", hold_date="Custódia").get,
     )
-    charts.monthly_yoc(api.monthly_yoc(asset, date_col))
+    cols[2].date_input(
+        "Data inicial:",
+        key=section_component_prefix.format(section, "filter_start_date"),
+        value=state.min_date,
+        max_value=state.max_date,
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
+    cols[3].date_input(
+        "Data final:",
+        key=section_component_prefix.format(section, "filter_end_date"),
+        value=state.max_date,
+        max_value=state.max_date,
+        format=config.ST_DATE_FORMAT,
+        on_change=update_state,
+    )
+    cumulative = st.toggle(
+        "Cumulativo",
+        value=False,
+    )
+    charts.monthly_yoc(state.filtered_monthly_yoc, cumulative)
 
     # ==== Proventos por Ativo ====
     st.subheader("Proventos por Ativo", divider="gray")
+    section = "earnings_by_asset"
 
     # Filtros
     cols = st.columns(5)
     cols[0].selectbox(
         "Ativo:",
         ["Todos"] + state.asset_codes,
-        key="filter_asset",
+        key=section_component_prefix.format(section, "filter_asset"),
         on_change=update_state,
     )
     cols[1].pills(
@@ -140,27 +207,28 @@ if state.asset_codes:
         (values := [k.value for k in EarningKind]),
         selection_mode="multi",
         default=values,
-        key="filter_earning_kind",
+        key=section_component_prefix.format(section, "filter_earning_kind"),
         on_change=update_state,
     )
     cols[2].selectbox(
         "Filtrar data de:",
         ["Pagamento", "Custódia"],
-        key="filter_date_kind",
+        key=section_component_prefix.format(section, "filter_date_kind"),
         on_change=update_state,
     )
     cols[3].date_input(
         "Data inicial:",
-        key="filter_start_date",
-        value=date(2000, 1, 1),
-        max_value=date(2050, 1, 1),
+        key=section_component_prefix.format(section, "filter_start_date"),
+        value=state.min_date,
+        max_value=state.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=update_state,
     )
     cols[4].date_input(
         "Data final:",
-        key="filter_end_date",
-        value="today",
+        key=section_component_prefix.format(section, "filter_end_date"),
+        value=state.max_date,
+        max_value=state.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=update_state,
     )

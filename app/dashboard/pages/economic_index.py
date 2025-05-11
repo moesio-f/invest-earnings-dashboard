@@ -31,18 +31,20 @@ if state.asset_codes:
     cols = st.columns(2)
     date_col = cols[0].selectbox(
         "Agrupar por data de:",
-        ["payment_date", "hold_date"],
+        ["hold_date", "payment_date"],
         format_func=dict(payment_date="Pagamento", hold_date="Custódia").get,
     )
     asset = cols[1].selectbox(
         "Ativo:",
         ["Todos"] + state.asset_codes,
     )
+    cumulative = st.toggle("Cumulativo", value=False)
     relative_bars = st.toggle("Valores relativos", value=False)
     charts.bar_yoc_variation(
         (df := api.monthly_index_yoc(asset if asset != "Todos" else None, date_col))[
             df.group == asset
-        ].drop(columns="group"),
+        ],
+        cumulative,
         relative_bars,
     )
 else:

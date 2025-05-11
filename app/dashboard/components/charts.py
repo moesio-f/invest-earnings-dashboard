@@ -65,7 +65,12 @@ def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):
 
 def monthly_yoc(
     df: DataFrame[MonthlyYoC],
+    cumulative: bool,
 ):
+    # Cumsum
+    if cumulative:
+        df["yoc"] = df.groupby("group").yoc.cumsum()
+
     # Show DataFrame with are chart
     fig = px.bar(
         df,
@@ -81,13 +86,19 @@ def monthly_yoc(
     st.plotly_chart(fig)
 
 
-def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], relative: bool):
+def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative: bool):
+    assert df.group.nunique() == 1
+    df = df.drop(columns="group")
     cols = ["Yield on Cost (YoC)", "CDI", "CDI Líquido", "IPCA"]
+    numeric_cols = list(set(df.columns) - set(["reference_date"]))
+
     if relative:
         df = df.copy()
         cols.pop(0)
-        for c in ["cdi", "ipca", "cdb"]:
-            df.loc[:, [c]] = df.yoc - df[c]
+        df.loc[:, numeric_cols] = df.yoc - df[numeric_cols]
+
+    if cumulative:
+        df.loc[:, numeric_cols] = df[numeric_cols].cumsum()
 
     fig = px.bar(
         df.rename(
