@@ -14,6 +14,7 @@ from app.config import DB_CONFIG
 from app.db.models import Base
 
 LOGGER = logging.getLogger(__name__)
+N_MOST_RECENT_BACKUPS: int = 3
 
 
 def parquet_backup(db: str = None, output_path: str = None):
@@ -27,9 +28,12 @@ def parquet_backup(db: str = None, output_path: str = None):
         )
         return
 
+    # Convert to Path
+    output_path = Path(output_path)
+
     # Get timestamp
     now = datetime.now()
-    out_dir = Path(output_path).joinpath(now.date().isoformat())
+    out_dir = output_path.joinpath(now.date().isoformat())
     backup_meta = dict(timestamp=now.isoformat())
     out_dir.mkdir(exist_ok=True)
 
@@ -49,6 +53,27 @@ def parquet_backup(db: str = None, output_path: str = None):
     # Write metadata
     with out_dir.joinpath("metadata.json").open("w+") as f:
         json.dump(backup_meta, f, indent=2, ensure_ascii=False)
+
+    # Maybe clean old backups?
+    directories = list(sorted(p.parent for p in output_path.rglob("metadata.json")))
+    if len(directories) > N_MOST_RECENT_BACKUPS:
+        # Delete all but last `N_MOST_RECENT_BACKUPS`
+        for dir in directories[:-N_MOST_RECENT_BACKUPS]:
+            # First, delete each file in the
+            #   directory
+            dir.joinpath("metadata.json").unlink()
+            for file in dir.glob("*.parquet"):
+                file.unlink()
+
+            # Directory should be clean
+            try:
+                dir.rmdir()
+            except:
+                LOGGER.warning(
+                    f"Failed to delete '{dir}'. It followed the backup "
+                    "directory naming convention but didn't folow the "
+                    "contents convention (maybe user added directories/files?)."
+                )
 
 
 if __name__ == "__main__":
