@@ -7,5 +7,9 @@ services:
       DB_BOOTSTRAP_DATA_PATH: /code/data/bootstrap/
       CONNECTION_STRING: "sqlite:////code/database.db"
       DASHBOARD_PORT: 8080
+    volumes:
+      - ./main.db:/code/database.db
+      - ./bak:/code/backups
+    restart: 'unless-stopped'
     ports:
       - 8082:8080
