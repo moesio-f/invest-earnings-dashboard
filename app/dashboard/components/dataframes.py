@@ -1,38 +1,37 @@
+import functools
+from typing import Callable
+
 import pandas as pd
 import streamlit as st
 from pandera.typing import DataFrame
 
 from app.analytics.entities import EarningYield
 from app.config import DASHBOARD_CONFIG as config
-from app.db.models import Asset, Earning, Transaction, EconomicData
+from app.dashboard.state import Manager, ScopedState
+from app.db.models import Earning, EconomicData, Transaction
+
+_PREFIX = "__dataframe_{}"
 
 
-def asset_dataframe(assets: list[Asset]):
-    data = dict(
-        b3_code=[],
-        name=[],
-        description=[],
-        kind=[],
-        added=[],
-    )
+def asset_dataframe(
+    assets: pd.DataFrame,
+    selection_mode=None,
+    selection_callable: Callable[[ScopedState], None] = None,
+):
+    prefix = _PREFIX.format("asset")
 
-    if assets:
-        for a in assets:
-            for k in data.keys():
-                # Obter valor do modelo
-                v = getattr(a, k)
+    if selection_callable is not None:
 
-                # Se for tipo do ativo,
-                #   mapear para representação
-                #   textual
-                if k == "kind":
-                    v = v.value
+        def on_select():
+            selection_callable(
+                Manager.get_proxied_data_state("asset_dataframe", prefix)
+            )
 
-                # Adicionar dado do ativo
-                data[k].append(v)
+    else:
+        on_select = "ignore"
 
     st.dataframe(
-        pd.DataFrame(data).sort_values(["kind", "b3_code"]),
+        assets,
         hide_index=True,
         column_config={
             "b3_code": st.column_config.TextColumn("Código do Ativo (B3)", pinned=True),
@@ -43,6 +42,9 @@ def asset_dataframe(assets: list[Asset]):
                 "Adicionado", format=config.ST_DATE_FORMAT
             ),
         },
+        key=f"{prefix}_event",
+        selection_mode=selection_mode,
+        on_select=on_select,
     )
 
 

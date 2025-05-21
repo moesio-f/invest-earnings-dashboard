@@ -27,6 +27,19 @@ def create_asset(
         callback()
 
 
+def update_asset(data: ScopedState, callback: Callable[[], None] = None):
+    api.update_asset(
+        b3_code=data.b3_code(),
+        name=data.name(),
+        description=data.description(),
+        kind=AssetKind.from_value(data.kind()),
+        added=data.added(),
+    )
+
+    if callback:
+        callback()
+
+
 def add_transaction(data: ScopedState, callback: Callable[[], None] = None):
     api.add_transaction(
         asset_b3_code=data.asset_b3_code(),

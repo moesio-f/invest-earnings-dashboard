@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Callable
 
 import streamlit as st
@@ -6,32 +7,97 @@ from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.state import Manager, ScopedState
 from app.db.models import AssetKind, EarningKind, EconomicIndex, TransactionKind
 
-_PREFIX = "__form_create_dialog_{}"
+_PREFIX = "__form_dialog_{}"
 
 
-@st.dialog("Adicionar ativo")
-def asset_create(create_fn: Callable[[ScopedState], None]):
-    prefix = _PREFIX.format("asset")
-
-    with st.form("asset_create", enter_to_submit=False, border=False):
-        st.text_input("Código B3:", key=f"{prefix}_b3_code")
-        st.text_input("Nome do ativo:", key=f"{prefix}_name")
-        st.text_area("Descrição do ativo:", key=f"{prefix}_description")
+def _asset_dialog(
+    prefix: str,
+    on_click: Callable[[ScopedState], None] = None,
+    b3_code=None,
+    b3_editable: bool = True,
+    name=None,
+    name_editable: bool = True,
+    description=None,
+    description_editable: bool = True,
+    kind=None,
+    kind_editable: bool = True,
+    added=None,
+    added_editable: bool = False,
+    submit_name: str = "Adicionar",
+):
+    prefix = _PREFIX.format(prefix)
+    with st.form(f"{prefix}_dialog", enter_to_submit=False, border=False):
+        st.text_input(
+            "Código B3:",
+            key=f"{prefix}_b3_code",
+            value=b3_code,
+            disabled=not b3_editable,
+        )
+        st.text_input(
+            "Nome do ativo:",
+            key=f"{prefix}_name",
+            value=name,
+            disabled=not name_editable,
+        )
+        st.text_area(
+            "Descrição do ativo:",
+            key=f"{prefix}_description",
+            value=description,
+            disabled=not description_editable,
+        )
         st.pills(
             "Tipo do ativo:",
             [k.value for k in AssetKind],
             key=f"{prefix}_kind",
+            default=kind,
+            disabled=not kind_editable,
         )
 
+        if added_editable:
+            st.date_input(
+                "Data de adição:",
+                key=f"{prefix}_added",
+                format=config.ST_DATE_FORMAT,
+                value=added,
+            )
+
         submit = st.form_submit_button(
-            "Adicionar",
-            on_click=create_fn,
+            submit_name,
+            on_click=on_click,
             args=[Manager.get_proxied_data_state("asset_create", prefix)],
         )
 
         # If submit, run on_click and rerun app
         if submit:
             st.rerun()
+
+
+@st.dialog("Adicionar ativo")
+def asset_create(create_fn: Callable[[ScopedState], None]):
+    _asset_dialog("asset_create", on_click=create_fn)
+
+
+@st.dialog("Atualizar ativo")
+def asset_update(
+    b3_code: str,
+    name: str,
+    description: str,
+    kind: str,
+    added: date,
+    update_fn: Callable[[ScopedState], None],
+):
+    _asset_dialog(
+        "asset_update",
+        on_click=update_fn,
+        b3_editable=False,
+        b3_code=b3_code,
+        name=name,
+        description=description,
+        kind=kind,
+        submit_name="Atualizar",
+        added=added,
+        added_editable=True,
+    )
 
 
 @st.dialog("Adicionar transação")

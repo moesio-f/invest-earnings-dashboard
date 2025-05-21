@@ -1,12 +1,13 @@
 import functools
 
+import pandas as pd
 import streamlit as st
 
 from app.dashboard import utils
 from app.dashboard.api import api
 from app.dashboard.components import dataframes as cdf
 from app.dashboard.components import form_dialogs as cfd
-from app.dashboard.state import Manager
+from app.dashboard.state import Manager, ScopedState
 from app.db.models import EarningKind, TransactionKind
 
 state = Manager.get_page_state("settings")
@@ -24,8 +25,30 @@ def update_state(
 
     # Update assets
     if update_assets or initialize:
-        state.assets = api.assets()
-        state.asset_codes = list(sorted([a.b3_code for a in state.assets]))
+        data = dict(
+            b3_code=[],
+            name=[],
+            description=[],
+            kind=[],
+            added=[],
+        )
+
+        for a in api.assets():
+            for k in data.keys():
+                # Obter valor do modelo
+                v = getattr(a, k)
+
+                # Se for tipo do ativo,
+                #   mapear para representação
+                #   textual
+                if k == "kind":
+                    v = v.value
+
+                # Adicionar dado do ativo
+                data[k].append(v)
+
+        state.assets = pd.DataFrame(data).sort_values(["kind", "b3_code"])
+        state.asset_codes = state.assets.b3_code.sort_values().tolist()
 
     # Update transactions
     if update_transactions or initialize:
@@ -93,6 +116,22 @@ load_economic_data = functools.partial(
     callback=functools.partial(update_state, update_economic_data=True),
 )
 
+
+def update_asset(data: ScopedState):
+    event = data.event()["selection"]
+    if event["rows"]:
+        item = state.assets.iloc[event["rows"][0]]
+        cfd.asset_update(
+            b3_code=item.b3_code,
+            name=item["name"],
+            description=item.description,
+            kind=item.kind,
+            added=item.added,
+            update_fn=utils.update_asset,
+        )
+    update_state(update_assets=True)
+
+
 # === Título ===
 st.title("Configurações")
 st.markdown("Cadastro e gerenciamento de ativos, proventos e transações.")
@@ -110,7 +149,9 @@ if st.button(
     cfd.asset_create(create_asset)
 
 # Listagem de ativos
-cdf.asset_dataframe(state.assets)
+cdf.asset_dataframe(
+    state.assets, selection_mode="single-row", selection_callable=update_asset
+)
 
 
 if st.button(
