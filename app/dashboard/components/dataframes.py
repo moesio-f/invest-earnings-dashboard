@@ -84,10 +84,25 @@ def transaction_dataframe(
     )
 
 
-def earning_dataframe(earnings: pd.DataFrame):
+def earning_dataframe(
+    earnings: pd.DataFrame,
+    selection_mode=None,
+    selection_callable: Callable[[ScopedState], None] = None,
+):
+    prefix = _PREFIX.format("earning")
+
+    if selection_callable is not None:
+
+        def on_select():
+            selection_callable(
+                Manager.get_proxied_data_state("transaction_dataframe", prefix)
+            )
+
+    else:
+        on_select = "ignore"
 
     st.dataframe(
-        earnings,
+        earnings.drop(columns="id"),
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(
@@ -108,6 +123,9 @@ def earning_dataframe(earnings: pd.DataFrame):
                 "Imposto de Renda (%)", format="%.2f%%"
             ),
         },
+        key=f"{prefix}_event",
+        selection_mode=selection_mode,
+        on_select=on_select,
     )
 
 

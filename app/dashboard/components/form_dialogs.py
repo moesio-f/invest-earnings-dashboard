@@ -139,6 +139,82 @@ def _transaction_dialog(
             st.rerun()
 
 
+def _earning_dialog(
+    prefix: str,
+    asset_codes: list[str],
+    on_click: Callable[[ScopedState], None] = None,
+    asset_code_editable: bool = True,
+    hold_date=None,
+    hold_date_editable: bool = True,
+    payment_date=None,
+    payment_date_editable: bool = True,
+    kind=None,
+    kind_editable: bool = True,
+    value_per_share=0.0,
+    value_per_share_editable: bool = True,
+    ir_percentage=0.0,
+    ir_percentage_editable: bool = True,
+    submit_text="Adicionar",
+):
+    prefix = _PREFIX.format(prefix)
+    with st.form(f"{prefix}_form", enter_to_submit=False, border=False):
+        st.selectbox(
+            "Ativo:",
+            asset_codes,
+            key=f"{prefix}_asset_b3_code",
+            disabled=not asset_code_editable,
+        )
+        st.date_input(
+            "Data de custódia:",
+            key=f"{prefix}_hold_date",
+            format=config.ST_DATE_FORMAT,
+            value=hold_date,
+            disabled=not hold_date_editable,
+        )
+        st.date_input(
+            "Data de pagamento:",
+            key=f"{prefix}_payment_date",
+            format=config.ST_DATE_FORMAT,
+            value=payment_date,
+            disabled=not payment_date_editable,
+        )
+        st.number_input(
+            "Valor por unidade (R$):",
+            key=f"{prefix}_value_per_share",
+            min_value=0.0,
+            step=0.01,
+            value=value_per_share,
+            format="%0.5f",
+            disabled=not value_per_share_editable,
+        )
+        st.pills(
+            "Tipo de provento:",
+            [k.value for k in EarningKind],
+            key=f"{prefix}_kind",
+            default=kind,
+            disabled=not kind_editable,
+        )
+        st.number_input(
+            "Imposto de Renda Retido na Fonte (%):",
+            key=f"{prefix}_ir_percentage",
+            min_value=0.0,
+            step=0.01,
+            value=ir_percentage,
+            format="%0.2f",
+            disabled=not ir_percentage_editable,
+        )
+
+        submit = st.form_submit_button(
+            submit_text,
+            on_click=on_click,
+            args=[Manager.get_proxied_data_state("earning_create", prefix)],
+        )
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
 @st.dialog("Adicionar ativo")
 def asset_create(create_fn: Callable[[ScopedState], None]):
     _asset_dialog("asset_create", on_click=create_fn)
@@ -208,49 +284,35 @@ def add_earning(
     asset_codes: list[str],
     create_fn: Callable[[ScopedState], None],
 ):
-    prefix = _PREFIX.format("earning")
-    with st.form("earning_create", enter_to_submit=False, border=False):
-        st.selectbox("Ativo:", asset_codes, key=f"{prefix}_asset_b3_code")
-        st.date_input(
-            "Data de custódia:",
-            key=f"{prefix}_hold_date",
-            format=config.ST_DATE_FORMAT,
-        )
-        st.date_input(
-            "Data de pagamento:",
-            key=f"{prefix}_payment_date",
-            format=config.ST_DATE_FORMAT,
-        )
-        st.number_input(
-            "Valor por unidade (R$):",
-            key=f"{prefix}_value_per_share",
-            min_value=0.0,
-            step=0.01,
-            value=0.0,
-            format="%0.2f",
-        )
-        st.pills(
-            "Tipo de provento:",
-            [k.value for k in EarningKind],
-            key=f"{prefix}_kind",
-        )
-        st.number_input(
-            "Imposto de Renda Retido na Fonte (%):",
-            key=f"{prefix}_ir_percentage",
-            min_value=0.0,
-            step=0.01,
-            value=0.0,
-            format="%0.2f",
-        )
-        submit = st.form_submit_button(
-            "Adicionar",
-            on_click=create_fn,
-            args=[Manager.get_proxied_data_state("earning_create", prefix)],
-        )
+    _earning_dialog("earning_create", asset_codes=asset_codes, on_click=create_fn)
 
-        # If submit, run on_click and rerun app
-        if submit:
-            st.rerun()
+
+@st.dialog("Atualizar Provento")
+def earning_update(
+    asset_code: str,
+    kind: str,
+    hold_date: date,
+    payment_date: date,
+    value_per_share: float,
+    ir_percentage: float,
+    update_fn: Callable[[ScopedState], None],
+):
+    _earning_dialog(
+        "earning_create",
+        asset_codes=[asset_code],
+        asset_code_editable=False,
+        kind=kind,
+        kind_editable=True,
+        hold_date=hold_date,
+        hold_date_editable=False,
+        payment_date=payment_date,
+        payment_date_editable=True,
+        value_per_share=value_per_share,
+        value_per_share_editable=True,
+        ir_percentage=ir_percentage,
+        ir_percentage_editable=True,
+        on_click=update_fn,
+    )
 
 
 @st.dialog("Cadastrar Dado Econômico")

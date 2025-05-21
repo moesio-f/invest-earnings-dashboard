@@ -195,6 +195,25 @@ def update_transaction(data: ScopedState):
     update_state(update_transactions=True)
 
 
+def update_earning(data: ScopedState):
+    event = data.event()["selection"]
+    if event["rows"]:
+        item = state.earnings.iloc[event["rows"][0]]
+
+        cfd.earning_update(
+            asset_code=item.asset_b3_code,
+            kind=item.kind,
+            hold_date=item.hold_date,
+            payment_date=item.payment_date,
+            value_per_share=item.value_per_share,
+            ir_percentage=item.ir_percentage,
+            update_fn=functools.partial(
+                utils.earning_update, earning_id=item["id"].item()
+            ),
+        )
+    update_state(update_earnings=True)
+
+
 # === Título ===
 st.title("Configurações")
 st.markdown("Cadastro e gerenciamento de ativos, proventos e transações.")
@@ -310,7 +329,11 @@ cols[1].pills(
 )
 
 # Listagem de proventos
-cdf.earning_dataframe(state.earnings)
+cdf.earning_dataframe(
+    state.earnings,
+    selection_mode="single-row",
+    selection_callable=update_earning,
+)
 
 if st.button(
     "Importar proventos",

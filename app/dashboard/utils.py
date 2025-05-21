@@ -81,6 +81,21 @@ def add_earning(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+def earning_update(
+    data: ScopedState, earning_id: int, callback: Callable[[], None] = None
+):
+    api.update_earning(
+        earning_id=earning_id,
+        payment_date=data.payment_date(),
+        kind=EarningKind.from_value(data.kind()),
+        value_per_share=data.value_per_share(),
+        ir_percentage=data.ir_percentage(),
+    )
+
+    if callback:
+        callback()
+
+
 def add_economic(data: ScopedState, callback: Callable[[], None] = None):
     api.add_economic_data(
         index=data.index(),
