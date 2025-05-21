@@ -27,6 +27,19 @@ def create_asset(
         callback()
 
 
+def update_asset(data: ScopedState, callback: Callable[[], None] = None):
+    api.update_asset(
+        b3_code=data.b3_code(),
+        name=data.name(),
+        description=data.description(),
+        kind=AssetKind.from_value(data.kind()),
+        added=data.added(),
+    )
+
+    if callback:
+        callback()
+
+
 def add_transaction(data: ScopedState, callback: Callable[[], None] = None):
     api.add_transaction(
         asset_b3_code=data.asset_b3_code(),
@@ -34,6 +47,20 @@ def add_transaction(data: ScopedState, callback: Callable[[], None] = None):
         value_per_share=data.value_per_share(),
         shares=data.shares(),
         kind=TransactionKind.from_value(data.kind()),
+    )
+
+    if callback:
+        callback()
+
+
+def transaction_update(
+    data: ScopedState, transaction_id: int, callback: Callable[[], None] = None
+):
+    api.update_transaction(
+        transaction_id=transaction_id,
+        kind=TransactionKind.from_value(data.kind()),
+        value_per_share=data.value_per_share(),
+        shares=data.shares(),
     )
 
     if callback:
@@ -48,6 +75,21 @@ def add_earning(data: ScopedState, callback: Callable[[], None] = None):
         value_per_share=data.value_per_share(),
         ir_percentage=data.ir_percentage(),
         kind=EarningKind.from_value(data.kind()),
+    )
+
+    if callback:
+        callback()
+
+
+def earning_update(
+    data: ScopedState, earning_id: int, callback: Callable[[], None] = None
+):
+    api.update_earning(
+        earning_id=earning_id,
+        payment_date=data.payment_date(),
+        kind=EarningKind.from_value(data.kind()),
+        value_per_share=data.value_per_share(),
+        ir_percentage=data.ir_percentage(),
     )
 
     if callback:

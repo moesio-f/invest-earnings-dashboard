@@ -55,6 +55,41 @@ class APIv1:
 
         return asset
 
+    def update_asset(
+        self,
+        b3_code: str,
+        name: str | None = None,
+        description: str | None = None,
+        kind: AssetKind | None = None,
+        added: date | None = None,
+    ) -> Asset:
+        with sa_orm.Session(self._engine, expire_on_commit=False) as session:
+            asset = session.query(Asset).where(Asset.b3_code == b3_code).one()
+
+            # Update fields
+            for field, value in zip(
+                ["name", "description", "kind", "added"],
+                [name, description, kind, added],
+            ):
+                if value is not None:
+                    setattr(asset, field, value)
+
+            # Commit
+            session.commit()
+
+        return asset
+
+    def delete_asset(self, b3_code: str):
+        with sa_orm.Session(self._engine) as session:
+            # Query
+            asset = session.query(Asset).where(Asset.b3_code == b3_code).one()
+
+            # Delete
+            session.delete(asset)
+
+            # Commit
+            session.commit()
+
     def assets(self) -> list[Asset]:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
             return list(session.query(Asset).all())
@@ -88,6 +123,47 @@ class APIv1:
 
         return earning
 
+    def update_earning(
+        self,
+        earning_id: int,
+        payment_date: date | None = None,
+        value_per_share: float | None = None,
+        ir_percentage: float | None = None,
+        kind: EarningKind | None = None,
+    ) -> Earning:
+        with sa_orm.Session(self._engine, expire_on_commit=False) as session:
+            earning = session.query(Earning).where(Earning.id == earning_id).one()
+
+            # Update fields
+            for field, value in zip(
+                [
+                    "payment_date",
+                    "value_per_share",
+                    "ir_percentage",
+                    "kind",
+                ],
+                [payment_date, value_per_share, ir_percentage, kind],
+            ):
+                if value is not None:
+                    setattr(earning, field, value)
+
+            # Commit
+            session.commit()
+
+        return earning
+
+    def delete_earning(self, earning_id: int):
+        # Delete transaction
+        with sa_orm.Session(self._engine) as session:
+            # Query transaction
+            earning = session.query(Earning).where(Earning.id == earning_id).one()
+
+            # Delete
+            session.delete(earning)
+
+            # Commit
+            session.commit()
+
     def earnings(self) -> list[Earning]:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
             return list(
@@ -103,7 +179,7 @@ class APIv1:
         kind: TransactionKind,
         value_per_share: float,
         shares: int,
-    ):
+    ) -> Transaction:
         # Create transaction
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
             transaction = Transaction(
@@ -123,6 +199,48 @@ class APIv1:
 
         return transaction
 
+    def update_transaction(
+        self,
+        transaction_id: int,
+        kind: TransactionKind | None = None,
+        value_per_share: float | None = None,
+        shares: int | None = None,
+    ) -> Transaction:
+        with sa_orm.Session(self._engine, expire_on_commit=False) as session:
+            transaction = (
+                session.query(Transaction).where(Transaction.id == transaction_id).one()
+            )
+
+            # Update fields
+            for field, value in zip(
+                [
+                    "kind",
+                    "value_per_share",
+                    "shares",
+                ],
+                [kind, value_per_share, shares],
+            ):
+                if value is not None:
+                    setattr(transaction, field, value)
+
+            # Commit
+            session.commit()
+
+        return transaction
+
+    def delete_transaction(self, transaction_id: int):
+        with sa_orm.Session(self._engine) as session:
+            # Query
+            transaction = (
+                session.query(Transaction).where(Transaction.id == transaction_id).one()
+            )
+
+            # Delete
+            session.delete(transaction)
+
+            # Commit
+            session.commit()
+
     def transactions(self) -> list[Transaction]:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
             return list(
@@ -137,7 +255,7 @@ class APIv1:
         reference_date: date,
         percentage_change: float,
         number_index: float = None,
-    ):
+    ) -> EconomicData:
         self.load_economic_data(
             dict(
                 index=index,
@@ -146,6 +264,22 @@ class APIv1:
                 number_index=number_index,
             )
         )
+
+    def delete_economic_data(self, index: EconomicIndex, reference_date: date):
+        with sa_orm.Session(self._engine) as session:
+            # Query
+            economic = (
+                session.query(EconomicData)
+                .where(EconomicData.index == index)
+                .where(EconomicData.reference_date == reference_date)
+                .one()
+            )
+
+            # Delete
+            session.delete(economic)
+
+            # Commit
+            session.commit()
 
     def load_economic_data(self, *data: dict):
         data = list(data)
