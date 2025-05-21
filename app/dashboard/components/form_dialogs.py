@@ -13,6 +13,7 @@ _PREFIX = "__form_dialog_{}"
 def _asset_dialog(
     prefix: str,
     on_click: Callable[[ScopedState], None] = None,
+    on_click_delete: Callable[[], None] = None,
     b3_code=None,
     b3_editable: bool = True,
     name=None,
@@ -298,7 +299,7 @@ def earning_update(
     update_fn: Callable[[ScopedState], None],
 ):
     _earning_dialog(
-        "earning_create",
+        "earning_update",
         asset_codes=[asset_code],
         asset_code_editable=False,
         kind=kind,

@@ -95,7 +95,7 @@ def earning_dataframe(
 
         def on_select():
             selection_callable(
-                Manager.get_proxied_data_state("transaction_dataframe", prefix)
+                Manager.get_proxied_data_state("earning_dataframe", prefix)
             )
 
     else:
