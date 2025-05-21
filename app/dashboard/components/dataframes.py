@@ -1,4 +1,3 @@
-import functools
 from typing import Callable
 
 import pandas as pd
@@ -8,7 +7,7 @@ from pandera.typing import DataFrame
 from app.analytics.entities import EarningYield
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.state import Manager, ScopedState
-from app.db.models import Earning, EconomicData, Transaction
+from app.db.models import EconomicData
 
 _PREFIX = "__dataframe_{}"
 
@@ -48,32 +47,25 @@ def asset_dataframe(
     )
 
 
-def transaction_dataframe(transactions: list[Transaction]):
-    data = dict(
-        asset_b3_code=[],
-        kind=[],
-        date=[],
-        value_per_share=[],
-        shares=[],
-    )
+def transaction_dataframe(
+    transactions: pd.DataFrame,
+    selection_mode=None,
+    selection_callable: Callable[[ScopedState], None] = None,
+):
+    prefix = _PREFIX.format("transaction")
 
-    if transactions:
-        for t in transactions:
-            for k in data.keys():
-                # Obter valor do modelo
-                v = getattr(t, k)
+    if selection_callable is not None:
 
-                # Se for tipo do ativo,
-                #   mapear para representação
-                #   textual
-                if k == "kind":
-                    v = v.value
+        def on_select():
+            selection_callable(
+                Manager.get_proxied_data_state("transaction_dataframe", prefix)
+            )
 
-                # Adicionar dado do ativo
-                data[k].append(v)
+    else:
+        on_select = "ignore"
 
     st.dataframe(
-        pd.DataFrame(data).sort_values("date"),
+        transactions.drop(columns="id"),
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(
@@ -86,36 +78,16 @@ def transaction_dataframe(transactions: list[Transaction]):
             ),
             "shares": st.column_config.NumberColumn("Unidades", format="%d"),
         },
+        key=f"{prefix}_event",
+        selection_mode=selection_mode,
+        on_select=on_select,
     )
 
 
-def earning_dataframe(earnings: list[Earning]):
-    data = dict(
-        asset_b3_code=[],
-        kind=[],
-        hold_date=[],
-        payment_date=[],
-        value_per_share=[],
-        ir_percentage=[],
-    )
-
-    if earnings:
-        for e in earnings:
-            for k in data.keys():
-                # Obter valor do modelo
-                v = getattr(e, k)
-
-                # Se for tipo do ativo,
-                #   mapear para representação
-                #   textual
-                if k == "kind":
-                    v = v.value
-
-                # Adicionar dado do ativo
-                data[k].append(v)
+def earning_dataframe(earnings: pd.DataFrame):
 
     st.dataframe(
-        pd.DataFrame(data).sort_values("payment_date"),
+        earnings,
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(

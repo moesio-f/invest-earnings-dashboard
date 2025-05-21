@@ -125,14 +125,14 @@ class APIv1:
 
     def update_earning(
         self,
-        id: int,
+        earning_id: int,
         payment_date: date | None = None,
         value_per_share: float | None = None,
         ir_percentage: float | None = None,
         kind: EarningKind | None = None,
     ) -> Earning:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
-            earning = session.query(Earning).where(Earning.id == id).one()
+            earning = session.query(Earning).where(Earning.id == earning_id).one()
 
             # Update fields
             for field, value in zip(
@@ -152,11 +152,11 @@ class APIv1:
 
         return earning
 
-    def delete_earning(self, id: int):
+    def delete_earning(self, earning_id: int):
         # Delete transaction
         with sa_orm.Session(self._engine) as session:
             # Query transaction
-            earning = session.query(Earning).where(Earning.id == id).one()
+            earning = session.query(Earning).where(Earning.id == earning_id).one()
 
             # Delete
             session.delete(earning)
@@ -201,13 +201,15 @@ class APIv1:
 
     def update_transaction(
         self,
-        id: int,
+        transaction_id: int,
         kind: TransactionKind | None = None,
         value_per_share: float | None = None,
         shares: int | None = None,
     ) -> Transaction:
         with sa_orm.Session(self._engine, expire_on_commit=False) as session:
-            transaction = session.query(Transaction).where(Transaction.id == id).one()
+            transaction = (
+                session.query(Transaction).where(Transaction.id == transaction_id).one()
+            )
 
             # Update fields
             for field, value in zip(
@@ -226,10 +228,12 @@ class APIv1:
 
         return transaction
 
-    def delete_transaction(self, id: int):
+    def delete_transaction(self, transaction_id: int):
         with sa_orm.Session(self._engine) as session:
             # Query
-            transaction = session.query(Transaction).where(Transaction.id == id).one()
+            transaction = (
+                session.query(Transaction).where(Transaction.id == transaction_id).one()
+            )
 
             # Delete
             session.delete(transaction)

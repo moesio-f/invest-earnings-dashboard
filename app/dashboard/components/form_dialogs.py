@@ -23,10 +23,10 @@ def _asset_dialog(
     kind_editable: bool = True,
     added=None,
     added_editable: bool = False,
-    submit_name: str = "Adicionar",
+    submit_text: str = "Adicionar",
 ):
     prefix = _PREFIX.format(prefix)
-    with st.form(f"{prefix}_dialog", enter_to_submit=False, border=False):
+    with st.form(f"{prefix}_form", enter_to_submit=False, border=False):
         st.text_input(
             "Código B3:",
             key=f"{prefix}_b3_code",
@@ -62,9 +62,76 @@ def _asset_dialog(
             )
 
         submit = st.form_submit_button(
-            submit_name,
+            submit_text,
             on_click=on_click,
-            args=[Manager.get_proxied_data_state("asset_create", prefix)],
+            args=[Manager.get_proxied_data_state("asset_dialog", prefix)],
+        )
+
+        # If submit, run on_click and rerun app
+        if submit:
+            st.rerun()
+
+
+def _transaction_dialog(
+    prefix: str,
+    asset_codes: list[str],
+    on_click: Callable[[ScopedState], None] = None,
+    asset_code_editable: bool = True,
+    kind=None,
+    kind_editable: bool = True,
+    transaction_date=None,
+    transaction_date_editable: bool = True,
+    value_per_share=0.0,
+    value_per_share_editable: bool = True,
+    shares=0,
+    shares_editable: bool = True,
+    submit_text="Adicionar",
+):
+    prefix = _PREFIX.format(prefix)
+    with st.form(f"{prefix}_form", enter_to_submit=False, border=False):
+        st.selectbox(
+            "Ativo:",
+            asset_codes,
+            key=f"{prefix}_asset_b3_code",
+            disabled=not asset_code_editable,
+        )
+        st.pills(
+            "Tipo da transação:",
+            [k.value for k in TransactionKind],
+            default=kind,
+            disabled=not kind_editable,
+            key=f"{prefix}_kind",
+        )
+        st.date_input(
+            "Data da transação:",
+            key=f"{prefix}_date",
+            format=config.ST_DATE_FORMAT,
+            value=transaction_date,
+            disabled=not transaction_date_editable,
+        )
+        st.number_input(
+            "Valor por unidade (R$):",
+            key=f"{prefix}_value_per_share",
+            min_value=0.0,
+            value=value_per_share,
+            step=1.0,
+            format="%0.5f",
+            disabled=not value_per_share_editable,
+        )
+        st.number_input(
+            "Quantidade de unidades:",
+            key=f"{prefix}_shares",
+            min_value=0,
+            value=shares,
+            step=1,
+            format="%d",
+            disabled=not shares_editable,
+        )
+
+        submit = st.form_submit_button(
+            submit_text,
+            on_click=on_click,
+            args=[Manager.get_proxied_data_state("transaction_dialog", prefix)],
         )
 
         # If submit, run on_click and rerun app
@@ -105,48 +172,35 @@ def add_transaction(
     asset_codes: list[str],
     create_fn: Callable[[ScopedState], None],
 ):
-    prefix = _PREFIX.format("transaction")
-    with st.form("transaction_create", enter_to_submit=False, border=False):
-        st.selectbox(
-            "Ativo:",
-            asset_codes,
-            key=f"{prefix}_asset_b3_code",
-        )
-        st.pills(
-            "Tipo da transação:",
-            [k.value for k in TransactionKind],
-            key=f"{prefix}_kind",
-        )
-        st.date_input(
-            "Data da transação:",
-            key=f"{prefix}_date",
-            format=config.ST_DATE_FORMAT,
-        )
-        st.number_input(
-            "Valor por unidade (R$):",
-            key=f"{prefix}_value_per_share",
-            min_value=0.0,
-            value=0.0,
-            step=1.0,
-            format="%0.2f",
-        )
-        st.number_input(
-            "Quantidade de unidades:",
-            key=f"{prefix}_shares",
-            min_value=0,
-            value=0,
-            step=1,
-            format="%d",
-        )
-        submit = st.form_submit_button(
-            "Adicionar",
-            on_click=create_fn,
-            args=[Manager.get_proxied_data_state("transaction_create", prefix)],
-        )
+    _transaction_dialog(
+        "transaction_create", asset_codes=asset_codes, on_click=create_fn
+    )
 
-        # If submit, run on_click and rerun app
-        if submit:
-            st.rerun()
+
+@st.dialog("Atualizar transação")
+def transaction_update(
+    asset_code: str,
+    kind: str,
+    transaction_date: date,
+    value_per_share: float,
+    shares: int,
+    update_fn: Callable[[ScopedState], None],
+):
+    _transaction_dialog(
+        "transaction_update",
+        asset_codes=[asset_code],
+        kind=kind,
+        transaction_date=transaction_date,
+        value_per_share=value_per_share,
+        shares=shares,
+        asset_code_editable=False,
+        kind_editable=True,
+        value_per_share_editable=True,
+        shares_editable=True,
+        transaction_date_editable=False,
+        on_click=update_fn,
+        submit_text="Atualizar",
+    )
 
 
 @st.dialog("Cadastrar Provento")

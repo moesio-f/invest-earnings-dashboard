@@ -53,6 +53,20 @@ def add_transaction(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+def transaction_update(
+    data: ScopedState, transaction_id: int, callback: Callable[[], None] = None
+):
+    api.update_transaction(
+        transaction_id=transaction_id,
+        kind=TransactionKind.from_value(data.kind()),
+        value_per_share=data.value_per_share(),
+        shares=data.shares(),
+    )
+
+    if callback:
+        callback()
+
+
 def add_earning(data: ScopedState, callback: Callable[[], None] = None):
     api.add_earning(
         asset_b3_code=data.asset_b3_code(),

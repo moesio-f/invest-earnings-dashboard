@@ -52,11 +52,58 @@ def update_state(
 
     # Update transactions
     if update_transactions or initialize:
-        state.transactions = api.transactions()
+        data = dict(
+            id=[],
+            asset_b3_code=[],
+            kind=[],
+            date=[],
+            value_per_share=[],
+            shares=[],
+        )
+
+        for t in api.transactions():
+            for k in data.keys():
+                # Obter valor do modelo
+                v = getattr(t, k)
+
+                # Se for tipo do ativo,
+                #   mapear para representação
+                #   textual
+                if k == "kind":
+                    v = v.value
+
+                # Adicionar dado do ativo
+                data[k].append(v)
+
+        state.transactions = pd.DataFrame(data).sort_values("date", ascending=False)
 
     # Update earnings
     if update_earnings or initialize:
-        state.earnings = api.earnings()
+        data = dict(
+            id=[],
+            asset_b3_code=[],
+            kind=[],
+            hold_date=[],
+            payment_date=[],
+            value_per_share=[],
+            ir_percentage=[],
+        )
+
+        for e in api.earnings():
+            for k in data.keys():
+                # Obter valor do modelo
+                v = getattr(e, k)
+
+                # Se for tipo do ativo,
+                #   mapear para representação
+                #   textual
+                if k == "kind":
+                    v = v.value
+
+                # Adicionar dado do ativo
+                data[k].append(v)
+
+        state.earnings = pd.DataFrame(data).sort_values("payment_date", ascending=False)
 
     # Update economic data
     if update_economic_data or initialize:
@@ -76,13 +123,11 @@ def update_state(
         except:
             code, kind = default
 
-        def _filter(obj) -> bool:
-            return (code == "Todos" or obj.asset_b3_code == code) and (
-                obj.kind.value in kind
-            )
+        def _filter(row) -> bool:
+            return (code == "Todos" or row.asset_b3_code == code) and (row.kind in kind)
 
         key = f"{st_key}s"
-        state[key] = list(filter(_filter, state[key]))
+        state[key] = state[key][state[key].apply(_filter, axis=1)]
 
     # If we initialized, set flag
     if initialize:
@@ -130,6 +175,24 @@ def update_asset(data: ScopedState):
             update_fn=utils.update_asset,
         )
     update_state(update_assets=True)
+
+
+def update_transaction(data: ScopedState):
+    event = data.event()["selection"]
+    if event["rows"]:
+        item = state.transactions.iloc[event["rows"][0]]
+
+        cfd.transaction_update(
+            asset_code=item.asset_b3_code,
+            kind=item.kind,
+            transaction_date=item.date,
+            value_per_share=item.value_per_share,
+            shares=item.shares,
+            update_fn=functools.partial(
+                utils.transaction_update, transaction_id=item["id"].item()
+            ),
+        )
+    update_state(update_transactions=True)
 
 
 # === Título ===
@@ -197,7 +260,11 @@ cols[1].pills(
 )
 
 # Listagem de transações
-cdf.transaction_dataframe(state.transactions)
+cdf.transaction_dataframe(
+    state.transactions,
+    selection_mode="single-row",
+    selection_callable=update_transaction,
+)
 
 if st.button(
     "Importar transações",
