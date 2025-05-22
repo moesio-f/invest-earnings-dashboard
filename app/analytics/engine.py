@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from typing import Callable
 
 import pandas as pd
@@ -29,6 +29,7 @@ class AnalyticsEngine:
     def __init__(self, engine: sa.Engine):
         self._engine = engine
         self._cache = dict()
+        self._cache["__last_update"] = datetime.now()
 
     def earning_metrics(self) -> EarningMetrics:
         df = self.earning_yield()
@@ -329,11 +330,17 @@ class AnalyticsEngine:
         # Should invalidate cache?
         db_meta = self._db_state()
         cache_meta = self._cache.get("__db_meta", None)
-        if db_meta != cache_meta:
+        timestamp = datetime.now()
+
+        # If db changed or TTL expired, renew cache
+        if db_meta != cache_meta or (
+            timestamp - self._cache["__last_update"]
+        ).total_seconds() > (60 * 3):
             keys = list(self._cache)
             for k in keys:
                 del self._cache[k]
             self._cache["__db_meta"] = db_meta
+            self._cache["__last_update"] = timestamp
 
         # Maybe add to cache
         if key not in self._cache:
@@ -348,5 +355,5 @@ class AnalyticsEngine:
                 "n_entities": sum(
                     session.query(e).count()
                     for e in [Asset, Transaction, Earning, EconomicData]
-                )
+                ),
             }
