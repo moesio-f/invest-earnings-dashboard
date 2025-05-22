@@ -313,6 +313,7 @@ def earning_update(
         ir_percentage=ir_percentage,
         ir_percentage_editable=True,
         on_click=update_fn,
+        submit_text="Atualizar",
     )
 
 
