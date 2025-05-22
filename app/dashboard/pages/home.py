@@ -3,6 +3,7 @@ from datetime import date
 import streamlit as st
 
 from app.config import DASHBOARD_CONFIG as config
+from app.dashboard import utils
 from app.dashboard.api import api
 from app.dashboard.components import charts
 from app.dashboard.components import dataframes as cdf
@@ -59,9 +60,13 @@ def update_state():
         state.initialized = True
 
     # === Section `mean_yoc` query/filtering ===
-    section = section_data_proxy.get("monthly_yoc", dict())
-    asset = section.get("filter_asset", lambda: "Todos")()
-    date_col = section.get("filter_date_col", lambda: "payment_date")()
+    section = section_data_proxy.get("monthly_yoc")
+    asset = utils.safe_get_from_proxied_data(
+        section, key="filter_asset", default="Todos"
+    )
+    date_col = utils.safe_get_from_proxied_data(
+        section, key="filter_date_col", default="payment_date"
+    )
 
     # Avoid re-query whenever possible
     if asset != state.get("monthly_yoc_asset", None) or date_col != state.get(
@@ -75,34 +80,49 @@ def update_state():
         state.monthly_yoc_date_col = date_col
 
     # Filter
-    min_date = section.get("filter_start_date", lambda: state.min_date)()
-    max_date = section.get("filter_end_date", lambda: state.max_date)()
+    min_date = utils.safe_get_from_proxied_data(
+        section, key="filter_start_date", default=state.min_date
+    )
+    max_date = utils.safe_get_from_proxied_data(
+        section, key="filter_end_date", default=state.max_date
+    )
     state.filtered_monthly_yoc = (df := state.monthly_yoc)[
         (df.reference_date >= min_date) & (df.reference_date <= max_date)
     ]
 
     # === Section `earnings_by_asset` filtering ===
     df = state.earning_yield
-    section = section_data_proxy.get("earnings_by_asset", dict())
+    section = section_data_proxy.get("earnings_by_asset")
     if (
         not df.empty
-        and (asset := section.get("filter_asset", lambda: "Todos")()) != "Todos"
+        and (
+            asset := utils.safe_get_from_proxied_data(
+                section, key="filter_asset", default="Todos"
+            )
+        )
+        != "Todos"
     ):
         df = df[df.b3_code == asset]
 
     if not df.empty:
-        kind = section.get(
-            "filter_earning_kind", lambda: [k.value for k in EarningKind]
-        )()
+        kind = utils.safe_get_from_proxied_data(
+            section, key="filter_earning_kind", default=[k.value for k in EarningKind]
+        )
         df = df[df.kind.isin(kind)]
 
     if not df.empty:
         dcol = {"Pagamento": "payment_date", "Custódia": "hold_date"}[
-            section.get("filter_date_kind", lambda: "Pagamento")()
+            utils.safe_get_from_proxied_data(
+                section, key="filter_date_kind", default="Pagamento"
+            )
         ]
         ds, de = (
-            section.get("filter_start_date", lambda: state.min_date)(),
-            section.get("filter_end_date", lambda: state.max_date)(),
+            utils.safe_get_from_proxied_data(
+                section, key="filter_start_date", default=state.min_date
+            ),
+            utils.safe_get_from_proxied_data(
+                section, key="filter_end_date", default=state.max_date
+            ),
         )
         df = df[(df[dcol] >= ds) & (df[dcol] <= de)]
 

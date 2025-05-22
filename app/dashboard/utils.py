@@ -7,8 +7,17 @@ import pandas as pd
 
 from app.dashboard.api import api
 from app.dashboard.state import Manager, ScopedState
-from app.dashboard.state.proxies import ProxiedValue
+from app.dashboard.state.proxies import StateProxy
 from app.db.models import AssetKind, EarningKind, EconomicIndex, TransactionKind
+
+
+def safe_get_from_proxied_data(scope: ScopedState, key: str, default=None):
+    maybe_proxy = scope.get(key, None)
+    if isinstance(maybe_proxy, StateProxy):
+        return maybe_proxy.get(default)
+    elif maybe_proxy is None:
+        maybe_proxy = default
+    return maybe_proxy
 
 
 def create_asset(
