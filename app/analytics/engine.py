@@ -26,10 +26,11 @@ from app.db.models import (
 
 
 class AnalyticsEngine:
-    def __init__(self, engine: sa.Engine):
+    def __init__(self, engine: sa.Engine, cache_ttl: float = 15.0):
         self._engine = engine
         self._cache = dict()
         self._cache["__last_update"] = datetime.now()
+        self._cache_ttl = cache_ttl
 
     def earning_metrics(self) -> EarningMetrics:
         df = self.earning_yield()
@@ -331,11 +332,11 @@ class AnalyticsEngine:
         db_meta = self._db_state()
         cache_meta = self._cache.get("__db_meta", None)
         timestamp = datetime.now()
+        since_last_update = timestamp - self._cache["__last_update"]
 
         # If db changed or TTL expired, renew cache
-        if db_meta != cache_meta or (
-            timestamp - self._cache["__last_update"]
-        ).total_seconds() > (60 * 3):
+        if db_meta != cache_meta or since_last_update.total_seconds() > self._cache_ttl:
+            print("Invalidated")
             keys = list(self._cache)
             for k in keys:
                 del self._cache[k]
