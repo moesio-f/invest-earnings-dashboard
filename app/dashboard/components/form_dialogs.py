@@ -238,7 +238,7 @@ def asset_update(
         name=name,
         description=description,
         kind=kind,
-        submit_name="Atualizar",
+        submit_text="Atualizar",
         added=added,
         added_editable=True,
     )
