@@ -38,6 +38,6 @@ O dashboard possui uma seção simplificada de cadastro de ativos e proventos, i
 # Roadmap
 
 - Refatoração do código e adição de testes unitários;
-- Adição de novas funcionalidades na API pare removação/deleção de objetos;
-- Criação de API com flask que disponibiliza os resultados de forma agnóstica ao sistema (i.e., Python);
+- ~Adição de novas funcionalidades na API pare removação/deleção de objetos~ (Adicionado);
+- ~Criação de API com flask que disponibiliza os resultados de forma agnóstica ao sistema (i.e., Python)~ (Desconsiderado);
 - Novas visualizações e seções no dashboard;
