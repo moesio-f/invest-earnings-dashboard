@@ -30,7 +30,7 @@ class ProxiedGlobal(StateProxy):
         return st.session_state.get(*fn_args)
 
 
-class ProxiedValue:
+class ProxiedValue(StateProxy):
     def __init__(self, value):
         self._value = value
 

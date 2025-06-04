@@ -7,7 +7,7 @@ import pandas as pd
 
 from app.dashboard.api import api
 from app.dashboard.state import Manager, ScopedState
-from app.dashboard.state.proxies import StateProxy
+from app.dashboard.state.proxies import ProxiedValue, StateProxy
 from app.db.models import AssetKind, EarningKind, EconomicIndex, TransactionKind
 
 
@@ -142,9 +142,6 @@ def csv_insert(
         # Prepare state
         state = Manager.get_data_state("csv_insert")
         for idx, value in row.items():
-            if isinstance(value, Enum):
-                value = value.from_value(value)
-
             if "date" in idx:
                 value = date.fromisoformat(value)
 
