@@ -336,7 +336,6 @@ class AnalyticsEngine:
 
         # If db changed or TTL expired, renew cache
         if db_meta != cache_meta or since_last_update.total_seconds() > self._cache_ttl:
-            print("Invalidated")
             keys = list(self._cache)
             for k in keys:
                 del self._cache[k]

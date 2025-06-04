@@ -4,7 +4,7 @@ import streamlit as st
 
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.api import api
-from app.dashboard.components import charts
+from app.dashboard.components import charts, metrics
 from app.dashboard.state import Manager
 
 state = Manager.get_page_state("economic_index")
@@ -30,7 +30,7 @@ update_state()
 
 
 # ==== Título ====
-st.title("Yield on Cost (YoC) vs Indicadores Ecônomicos")
+st.title("Yield on Cost (YoC) vs Indicadores Econômicos")
 
 # Caso existam proventos, exibir
 if state.asset_codes and state.has_economic:
@@ -61,12 +61,15 @@ if state.asset_codes and state.has_economic:
 
     cumulative = st.toggle("Cumulativo", value=False)
     relative_bars = st.toggle("Valores relativos", value=False)
+    df = api.monthly_index_yoc(asset if asset != "Todos" else None, date_col)
+    df = df[
+        (df.group == asset)
+        & (df.reference_date >= start_date)
+        & (df.reference_date <= end_date)
+    ]
+    metrics.montly_index_yoc_metrics(df)
     charts.bar_yoc_variation(
-        (df := api.monthly_index_yoc(asset if asset != "Todos" else None, date_col))[
-            (df.group == asset)
-            & (df.reference_date >= start_date)
-            & (df.reference_date <= end_date)
-        ],
+        df,
         cumulative,
         relative_bars,
     )
