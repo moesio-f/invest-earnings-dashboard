@@ -38,19 +38,19 @@ Pela descrição do problema, parece existir um único _quanta_.
 ## Componentes
 
 Vide os requisitos da aplicação, temos os seguintes fluxos bem definidos:
-    - _Fluxo de cadastro_, no qual o usuário adiciona algum dado novo ao sistema (e.g., ativo, transação, provento, dado econômico);
-    - _Fluxo de visualização_, no qual o usuário deseja visualizar alguma das análises que pode ser realizadas pelo sistema;
+- _Fluxo de cadastro_, no qual o usuário adiciona algum dado novo ao sistema (e.g., ativo, transação, provento, dado econômico);
+- _Fluxo de visualização_, no qual o usuário deseja visualizar alguma das análises que pode ser realizadas pelo sistema;
 
 Perceba que uma pré-condição para a visualização é que as análises sejam executadas. Dessa forma, o fluxo de visualização deve possuir uma etapa de execução das análises. Ademais, por conta das exigências de performance, esse processo não deve ser demorado.
 
 ## Estilo Arquitetural
 
 Dado as características do sistema, uma arquitetura Monolítica Modular foi selecionada. Essa escolha se baseia nos seguintes fatores:
-    - Fluxos simples e diretamente ligados ao banco da aplicação;
-    - Solução mais performática possível;
-        - Computação distribuída introduz latência;
-        - Análises podem ser sequenciais ou utilizar dados compartilhados;
-        - Usuário único não requer escalabilidade;
+- Fluxos simples e diretamente ligados ao banco da aplicação;
+- Solução mais performática possível;
+    - Computação distribuída introduz latência;
+    - Análises podem ser sequenciais ou utilizar dados compartilhados;
+    - Usuário único não requer escalabilidade;
 
 
 ## Decisões Arquiteturais
