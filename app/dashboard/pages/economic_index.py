@@ -20,7 +20,7 @@ def update_state():
         state.has_economic = len(api.economic_data()) > 0
         cols = ["hold_date", "payment_date"]
         earning_yield = api.earning_yield()
-        state.asset_codes = earning_yield.b3_code.unique().tolist()
+        state.asset_codes = sorted(earning_yield.b3_code.unique().tolist())
         state.min_date = earning_yield[cols].min(axis=None)
         state.max_date = earning_yield[cols].max(axis=None)
         state.initialized = True

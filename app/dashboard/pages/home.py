@@ -41,7 +41,7 @@ def update_state():
         )
 
         # Get asset codes
-        state.asset_codes = state.earning_yield.b3_code.unique().tolist()
+        state.asset_codes = sorted(state.earning_yield.b3_code.unique().tolist())
 
         # Get minimum and max dates
         cols = ["hold_date", "payment_date"]

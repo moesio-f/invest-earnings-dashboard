@@ -48,7 +48,7 @@ def update_state(
                 data[k].append(v)
 
         state.assets = pd.DataFrame(data).sort_values(["kind", "b3_code"])
-        state.asset_codes = state.assets.b3_code.sort_values().tolist()
+        state.asset_codes = sorted(state.assets.b3_code.sort_values().tolist())
 
     # Update transactions
     if update_transactions or initialize:
