@@ -89,7 +89,7 @@ def monthly_yoc(
 def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative: bool):
     assert df.group.nunique() == 1
     df = df.drop(columns="group")
-    cols = ["Yield on Cost (YoC)", "CDI", "CDI Líquido", "IPCA"]
+    cols = ["Yield on Cost (YoC)", "CDI", "CDB", "IPCA"]
     numeric_cols = list(set(df.columns) - set(["reference_date"]))
 
     if relative:
@@ -109,7 +109,7 @@ def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative
                 yoc="Yield on Cost (YoC)",
                 cdi="CDI",
                 ipca="IPCA",
-                cdb="CDI Líquido",
+                cdb="CDB",
             )
         ),
         x="Mês",

@@ -46,31 +46,41 @@ def earning_global_metrics(
 
 def montly_index_yoc_metrics(df: DataFrame[MonthlyIndexYoC]):
     for container, label, value, help in zip(
-        [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
+        [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
         [
+            "Total de Meses",
             "Meses Acima do CDI",
             "Meses Acima do IPCA",
             "Meses Acima do CDB",
             "YoC Total",
             "CDI Total",
+            "CDB Total",
             "IPCA Total",
-            "CDI Líquido Total",
-            "Equivalência LCI",
+            "Equivalência LCI (CDI)",
+            "Equivalência CDB (CDI)",
+            "Equivalência CDI+",
+            "Equivalência IPCA+",
         ],
         [
+            len(df),
             *[(df.yoc > df[c]).sum() for c in ["cdi", "ipca", "cdb"]],
-            *[f"{df[c].sum():.2f}%" for c in ["yoc", "cdi", "ipca", "cdb"]],
-            f"{100 * df.yoc.mean() / df.cdi.mean():.2f}%",
+            *[f"{df[c].sum():.2f}%" for c in ["yoc", "cdi", "cdb", "ipca"]],
+            *[f"{100 * df.yoc.mean() / df[c].mean():.2f}%" for c in ["cdi", "cdb"]],
+            *[f"{12 * (df.yoc - df[c]).mean():.2f}%" for c in ["cdi", "ipca"]],
         ],
         [
+            "Quantidade de meses presentes na análise",
             "Quantidade meses com rendimento maior ou igual ao CDI.",
             "Quantidade meses com rendimento maior ou igual ao IPCA.",
             "Quantidade meses com rendimento maior ou igual ao CDI Líquido (85% do CDI).",
             "YoC total.",
             "CDI total.",
             "IPCA total.",
-            "CDI líquido total.",
-            "Taxa do CDI que torna o rendimento equivalente à um LCI/LCA isento de IR.",
+            "85% do CDI total. Representa o equivalente ao CDB.",
+            "Taxa de rendimento equivalente a um LCI/LCA atrlado ao CDI.",
+            "Taxa de rendimento para um CDB (15% IR).",
+            "Taxa de rendimento equivalente para investimentos CDI + X% a.a.",
+            "Taxa de rendimento equivalente para IPCA + X% a.a.",
         ],
     ):
         container.metric(label, value, help=help)
