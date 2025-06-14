@@ -65,17 +65,18 @@ Devem existir 2 serviços principais e uma interface gráfica. Em particular, ta
 
 - Serviço de Gerenciamento de Carteira: permite o cadastro e atualizações nos dados da carteira (e.g., proventos, transações, ativos);
     - Deve apenas realizar transações ACID;
-    - Responsável pelo schema `wallet`;
+    - Responsável pelo schema/banco `wallet`;
 - Serviço de Processamento de Dados: realiza análises suportadas pelo sistema;
     - Deve ser organizado utilizando uma arquitetura Event-Driven;
-    - Deve permitir execução manual de análises;
-    - Coordenação mínima, deve utilizar uma topologia Broker;
+    - Coordenação mínima, deve utilizar uma topologia `Mediator` com função exclusiva de `Dispatcher`;
+        - O `Dispatcher` é responsável por emitir os eventos de processamento;
+        - Ele deve ler o estado de `wallet` de forma agendada e emitir eventos de processamento conforme necessário;
     - Escrita no Banco deve ser realizada por processadores específico (e.g., `DataWriter`);
         - Tais processadores são responsáveis por escolher como e quando as análises realizadas pelo sistema serão persistidas no banco da aplicação;
         - Deve ser _stateful_ (i.e., deve conhecer o estado atual do banco, bem como dados que precisam ser escritas);
     - Processadores de análise devem ser _stateless_ e operar sobre os dados recebidos como entrada;
         - Devem produzir novos eventos indicando a finalização da análise (bem como o resultado);
-    - Responsável pelo schema `analytics`;
+    - Responsável pelo schema/banco `analytics`;
 - Interface Gráfica: composto pelo dashboard e UI para gerenciamento da carteira;
     - Emite eventos para o serviço de processamento;
     - Consome funcionalidades do serviço de gerenciamento de carteira;
@@ -89,7 +90,8 @@ Devem existir 2 serviços principais e uma interface gráfica. Em particular, ta
 title: Visão Geral da Arquitetura
 ---
 flowchart TD
-db[(Banco de Dados)]
+wallet[(Wallet)]
+analytics[(Analytics)]
 
 subgraph Interface Gráfica
     dashboard[Dashboard]
@@ -105,10 +107,11 @@ subgraph Processamento de Dados
     writer_channel -->|Evento para Persistência| writer@{shape: procs, label: "Data Writers"}
 end
 config ---|Requisação| api[Serviço de Gerenciamento de Carteira]
-dashboard -->|Requisição de Processamento| dispatcher
-dashboard ---|Leitura| db
-writer -->|Escrita| db
-api ---|Escrita & Leitura| db
+dashboard ---|Leitura| analytics
+dispatcher ---|Leitura| wallet
+dispatcher ---|Leitura| analytics
+writer ---|Escrita| analytics
+api ---|Escrita & Leitura| wallet
 ```
 
 
