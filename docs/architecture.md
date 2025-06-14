@@ -6,7 +6,7 @@ Esse documento contém a arquitetura utilizada pela aplicação.
 
 > A aplicação é um dashboard que permite a análise de proventos recebidos por investimentos em ativos financeiros negociados na B3. Permitindo ao investidor analisar os retornos de cada ativo ou classe de ativo.
 
-- **Usuários**: 1;
+- **Usuários**: 1 por deploy;
 - **Requisitos**:
     - _Cadastro_
         - Permitir o cadastro de diferentes ativos;
@@ -22,44 +22,70 @@ Esse documento contém a arquitetura utilizada pela aplicação.
     - É possível que a aplicação possua dados relativos à um grande período de tempo;
     - A visualização deve ser atualizada sempre que os dados atualizarem;
     - Deve ser possível expandir as visualizações existentes na aplicação;
+    - Deve ser possível expandir o escopo da aplicação no futuro (e.g., preço atual dos ativos na bolsa, scrapping de dados);
 
 ## _Quantas_ Arquiteturais
 
-Pela descrição do problema, parece existir um único _quanta_.
+Pela descrição do problema, é possível identificar dois _quanta_ arquiteturais. Especificamente, existem dois conjuntos de características arquiteturais distintas:
+
+- Quanta de UI/Dashboard: _lightweight_, sempre disponível, responsivo;
+- Quanta de Processamento: análises e processamento, performance e escalabilidade;
 
 ### Características Arquiteturais
 
 > Essa lista é um mapeamento das características arquiteturais mais importantes do sistema.
 
-- _Performance_: o sistema precisa ser capaz de processar um conjunto de dados que cresce ao longo do tempo;
-- _Extensibility_: o sistema precisa ser extensível para novas visualizações e análises serem implementados com facilidade;
+#### Quanta I: UI/Dashboard
 
+- _Availability_: a UI deve estar disponível 24/7 mostrando as análises mais recentes realizadas pelo sistema e permitindo atualizações na carteira;
+- _Extensibility_: o sistema precisa ser extensível para novas visualizações;
+
+
+#### Quanta II: Processamento
+
+- _Performance_: o sistema precisa ser capaz de processar um grande conjunto de dados;
+- _Scalability_: o sistema deve ser escalável com um aumento na quantidade de análises;
+- _Extensibility_: o sistema precisa ser extensível para realização de novas análises;
 
 ## Componentes
 
-Vide os requisitos da aplicação, temos os seguintes fluxos bem definidos:
-- _Fluxo de cadastro_, no qual o usuário adiciona algum dado novo ao sistema (e.g., ativo, transação, provento, dado econômico);
-- _Fluxo de visualização_, no qual o usuário deseja visualizar alguma das análises que pode ser realizadas pelo sistema;
+Das características, é possível visualizar uma estrutura com 3 componentes principais:
 
-Perceba que uma pré-condição para a visualização é que as análises sejam executadas. Dessa forma, o fluxo de visualização deve possuir uma etapa de execução das análises. Ademais, por conta das exigências de performance, esse processo não deve ser demorado.
+- O primeiro componente é responsável por configurações da carteira;
+- O segundo componente é responsável pela geração das visualizações;
+- O último componente é responsável pelo processamento dos dados;
 
 ## Estilo Arquitetural
 
-Dado as características do sistema, uma arquitetura Monolítica Modular foi selecionada. Essa escolha se baseia nos seguintes fatores:
-- Fluxos simples e diretamente ligados ao banco da aplicação;
-- Solução mais performática possível;
-    - Computação distribuída introduz latência;
-    - Análises podem ser sequenciais ou utilizar dados compartilhados;
-    - Usuário único não requer escalabilidade;
-
+Dado as características do sistemas, o ideal é uma arquitetura que suporte múltiplos quanta arquiteturais. Dessa forma, a Arquitetura Baseada em Serviços foi selecionada.
 
 ## Decisões Arquiteturais
 
-### Arquiteturais
+Devem existir 2 serviços principais e uma interface gráfica. Em particular, tais componentes devem ser responsáveis pelo seguinte:
 
-- A interface de usuário deve se comunicar com o restante do sistema através de uma _API Facade_;
+- Serviço de Gerenciamento de Carteira: permite o cadastro e atualizações nos dados da carteira (e.g., proventos, transações, ativos);
+    - Deve apenas realizar transações ACID;
+    - Responsável pelo schema `wallet`;
+- Serviço de Processamento de Dados: realiza análises suportadas pelo sistema;
+    - Deve ser organizado utilizando uma arquitetura Event-Driven;
+    - Deve permitir execução manual de análises;
+    - Coordenação mínima, deve utilizar uma topologia Broker;
+    - Escrita no Banco deve ser realizada por processadores específico (e.g., `DataWriter`);
+        - Tais processadores são responsáveis por escolher como e quando as análises realizadas pelo sistema serão persistidas no banco da aplicação;
+        - Deve ser _stateful_ (i.e., deve conhecer o estado atual do banco, bem como dados que precisam ser escritas);
+    - Processadores de análise devem ser _stateless_ e operar sobre os dados recebidos como entrada;
+        - Devem produzir novos eventos indicando a finalização da análise (bem como o resultado);
+    - Responsável pelo schema `analytics`;
+- Interface Gráfica: composto pelo dashboard e UI para gerenciamento da carteira;
+    - Emite eventos para o serviço de processamento;
+    - Consome funcionalidades do serviço de gerenciamento de carteira;
+    - Criar dashboards das análises presentes em `analytics` (read-only);
+    - Deve ser organizado como um monolito modular;
+        - Limitar reuso entre páginas da interface;
+        - O máximo a ser compartilhado são utilidades agnósticas ao domínio;
 
-### Design
+```mermaid
 
-- O processo de análise de dados pode criar tabelas auxiliares no Banco para melhoria de performance;
+```
+
 
