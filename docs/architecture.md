@@ -50,7 +50,7 @@ Das características, é possível visualizar uma estrutura com os seguintes com
 
 Dado as características do sistemas, a Arquitetura Event-Driven com topologia Mediator foi selecionada. Para funcionalidades que requerem uma resposta, será utilizado a estratégia _request-reply_.
 
-Essa escolha se baseia no fato que o sistema como um todo responde a algum tipo de evento. Por exemplo, ao se cadastrar um novo _provento_ para um dado _ativo_, é necessário a execução de múltiplas análises para essa entrada (e.g., YoC, equivalências, etc). A presença de um ou mais mediadores é importante para garantir a _consistência_ dos resultados e identificar erros/falhas.
+Essa escolha se baseia no fato que o sistema como um todo responde a algum tipo de evento. Por exemplo, ao se cadastrar um novo _provento_ para um dado _ativo_, é necessário a execução de múltiplas análises para essa entrada (e.g., YoC, equivalências, etc). A presença de um ou mais mediadores é importante para garantir a _consistência_ dos resultados e identificar erros/falhas. Um detalhe importante, no futuro pode ser vantajoso utilizar uma arquitetura Space-Based para reduzir a dependência de um banco síncrono.
 
 ## Decisões Arquiteturais
 
@@ -83,54 +83,37 @@ writer ---|Escrita| analytics
 api ---|Escrita & Leitura| wallet
 ```
 
+### Canais
+
+> Canais representam meios de comunicação entre mediadores e processadores.
+
+- `Mediators`: canais para eventos que devem ser iniciados por mediadores;
+    - `simple_mediator`: canal padrão que deve ser utilizado p
+- `Processors`: canal de broadcast para todos processadores;
+- `P2P`: canais P2P disponibilizados por cada processador;
+- `Multicast`: canais de Pub/Sub gerenciados por mediadores, processadores podem escolher escutar tais canais;      
+
 ### Mediators
 
-Para garantir a funcionalidade do sistema, são necessários alguns mediadores distintos.
+> Os "mediadores" servem para coordenar processadores de forma a garantir consistência dos dados e/ou operações.
 
-- `GetMediator`: mediador para atividades simples como recuperação de informações;
-    - Esse mediador escuta o canal de eventos iniciadores;
-    - Esse mediador é responsável pela leitura a algum banco de dados da aplicação;
-    - Deve responder no canal apropriado de resposta e no de broadcast;
-    - Caso o mediador não seja capaz de responder, deve enviar o mesmo evento para o canal do próximo mediador;
-- `CreateUpdateMediator`: mediador para atividades de criação ou atualização de dados;
-    - Esse mediador escuta o canal de eventos de criação e atualização;
-    - Esse mediador é responsável pelo gerenciamento de um workflow relacionado com a criação ou atualização de entidades;
-    - Deve responder no canal apropriado de resposta e no de broadcast;
-    - Caso esse mediador não seja capaz de responder, deve indicar na resposta o motivo;
+- `SimpleMediator`: mediador para atividades simples que necessitam _request-reply_;
+    - Esse mediador escuta o `Mediator` e `Broadcast`;
+    - 
+- ``:
 
 ### Processors
 
-Os "processadores" representam atividades que podem ser realizadas em resposta a um determinado evento. 
+> Os "processadores" representam atividades que podem ser realizadas em resposta a um determinado evento.
 
-Todos processadores escutam ao canal de broadcast e possuem canais próprios para comunicação point-to-point. A resposta do processador deve ser enviada ao canal de: (i) resposta, se point-to-point; ou (ii) broadcast, se a mensagem original veio do broadcast.
+Todos processadores escutam o canal de broadcast e possuem canais próprios para comunicação point-to-point/multicast. A resposta do processador deve ser enviada ao canal de resposta (se point-to-point/multicast) ou de broadcast.
 
-- `DataWriter`: responsável pela escrita de algum dado no banco;
-    - Responsável por escrita, atualização e deleção;
-    - Mensagens devem possuir informação sobre o banco, tabela e afins;
-    - 
-- `AlayticProcessor`: classe de processadores de análise de dados
-
-Devem existir 2 serviços principais e uma interface gráfica. Em particular, tais componentes devem ser responsáveis pelo seguinte:
-
-- Serviço de Gerenciamento de Carteira: permite o cadastro e atualizações nos dados da carteira (e.g., proventos, transações, ativos);
-    - Deve apenas realizar transações ACID;
-    - Responsável pelo schema/banco `wallet`;
-- Serviço de Processamento de Dados: realiza análises suportadas pelo sistema;
-    - Deve ser organizado utilizando uma arquitetura Event-Driven;
-    - Coordenação deve ser evitada, todavia deve-se utilizar uma topologia `Mediator`;
-    - Escrita no Banco deve ser realizada por processadores específico (e.g., `DataWriter`);
-        - Tais processadores são responsáveis por escolher como e quando as análises realizadas pelo sistema serão persistidas no banco da aplicação;
-        - Deve ser _stateful_ (i.e., deve conhecer o estado atual do banco, bem como dados que precisam ser escritas);
-    - Processadores de análise devem ser _stateless_ e operar sobre os dados recebidos como entrada;
-        - Devem produzir novos eventos indicando a finalização da análise (bem como o resultado);
-    - Responsável pelo schema/banco `analytics`;
-- Interface Gráfica: composto pelo dashboard e UI para gerenciamento da carteira;
-    - Emite eventos para o serviço de processamento;
-    - Consome funcionalidades do serviço de gerenciamento de carteira;
-    - Criar dashboards das análises presentes em `analytics` (read-only);
-    - Deve ser organizado como um monolito modular;
-        - Limitar reuso entre páginas da interface;
-        - O máximo a ser compartilhado são utilidades agnósticas ao domínio;
+- `DataWriter`: processador que realiza escritas, atualizações e deleções em algum banco do sistema;
+- `ContextCreator`: processador que cria o _contexto_ de alguma operação realizada em algum banco;
+    - Responsável por obter todos os dados associados com uma dada operação no banco;
+- `AnalyticProcessor`: definição genérica de processadores de dados analíticos;
+    -  Responsável por realização de análises sobre eventos que geram contextos de análise;
+    -  
 
 
 
