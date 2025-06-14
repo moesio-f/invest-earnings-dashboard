@@ -85,7 +85,30 @@ Devem existir 2 serviços principais e uma interface gráfica. Em particular, ta
         - O máximo a ser compartilhado são utilidades agnósticas ao domínio;
 
 ```mermaid
+---
+title: Visão Geral da Arquitetura
+---
+flowchart TD
+db[(Banco de Dados)]
 
+subgraph Interface Gráfica
+    dashboard[Dashboard]
+    config[Gerenciamento de Carteira]
+end
+subgraph Processamento de Dados
+    writer_channel@{shape: das, label: "Writer Channel"}
+    processor_channel@{shape: das, label: "Processor Channel"}
+    dispatcher[Event Dispatcher] -->|Evento de Processamento| processor_channel
+    processor_channel -->|Evento de Processamento| processor@{shape: procs, label: "Data Processors"}
+    processor -->|Broadcast de Resultado| processor_channel
+    processor -->|Broadcast de Resultado| writer_channel
+    writer_channel -->|Evento para Persistência| writer@{shape: procs, label: "Data Writers"}
+end
+config ---|Requisação| api[Serviço de Gerenciamento de Carteira]
+dashboard -->|Requisição de Processamento| dispatcher
+dashboard ---|Leitura| db
+writer -->|Escrita| db
+api ---|Escrita & Leitura| db
 ```
 
 
