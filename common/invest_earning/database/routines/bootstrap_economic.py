@@ -2,35 +2,24 @@
 geração de backups programáticas.
 """
 
-import json
 import logging
-from datetime import datetime
-from pathlib import Path
 
+import click
 import pandas as pd
 import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
 
-from app.config import DB_CONFIG
-from app.db.models import EconomicData
+from invest_earning.database.wallet import EconomicData
 
 LOGGER = logging.getLogger(__name__)
 
 
-def maybe_load_economic_data(db: str = None, data_path: str = None):
-    if db is None:
-        db = DB_CONFIG.connection_string
-
-    data_path = DB_CONFIG.db_bootstrap_data_path if data_path is None else data_path
-    if data_path is None:
-        LOGGER.warning(
-            "Data path for bootstrap not set (`DB_BOOTSTRAP_DATA_PATH`) "
-            "skipping routine."
-        )
-        return
-
+@click.command()
+@click.option("--db_url", help="String de conexão com o banco de dados.")
+@click.argument("--data_path", help="Caminho para os dados ecônomicos.")
+def maybe_load_economic_data(db_url: str, data_path: str):
     # Write each parquet from data path to database
-    engine = sa.create_engine(db)
+    engine = sa.create_engine(db_url)
     economic = data_path.joinpath(f"{EconomicData.__tablename__}.parquet")
     if not economic.exists():
         LOGGER.warning(

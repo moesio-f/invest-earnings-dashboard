@@ -1,0 +1,2 @@
+invest-earning-common>=0.0.1
+fastapi[standard]>=0.115.0

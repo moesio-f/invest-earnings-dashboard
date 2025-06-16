@@ -7,11 +7,12 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import BigInteger, Integer, Numeric
 
-from .base import Base
-from .entities import AssetKind, TransactionKind, EarningKind
+from invest_earning.database.base import WalletBase
+
+from .entities import AssetKind, EarningKind, TransactionKind
 
 
-class Asset(Base):
+class Asset(WalletBase):
     __tablename__ = "asset"
 
     b3_code: Mapped[str] = mapped_column(
@@ -38,7 +39,7 @@ class Asset(Base):
         return f"Asset({self.b3_code}, {self.name}, {self.kind.value})"
 
 
-class Earning(Base):
+class Earning(WalletBase):
     __tablename__ = "earning"
 
     id = mapped_column(
@@ -76,7 +77,7 @@ class Earning(Base):
         )
 
 
-class Transaction(Base):
+class Transaction(WalletBase):
     __tablename__ = "transaction"
 
     id = mapped_column(
@@ -111,7 +112,7 @@ class Transaction(Base):
         )
 
 
-class EarningsRights(Base):
+class EarningsRights(WalletBase):
     __tablename__ = "earnings_rights"
 
     earning = mapped_column(ForeignKey("earning.id"), primary_key=True)

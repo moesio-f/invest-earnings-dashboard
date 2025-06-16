@@ -7,26 +7,23 @@ import logging
 from datetime import datetime
 from pathlib import Path
 
+import click
 import pandas as pd
 import sqlalchemy as sa
 
-from app.config import DB_CONFIG
-from app.db.models import Base
+from invest_earning.database import base
 
 LOGGER = logging.getLogger(__name__)
 N_MOST_RECENT_BACKUPS: int = 3
 
 
-def parquet_backup(db: str = None, output_path: str = None):
-    if db is None:
-        db = DB_CONFIG.connection_string
-
-    output_path = DB_CONFIG.db_backup_path if output_path is None else output_path
-    if output_path is None:
-        LOGGER.warning(
-            "Output path for backups not set (`DB_BACKUP_PATH`) skipping routine."
-        )
-        return
+@click.command()
+@click.option("--db_url", help="String de conexão com o banco de dados.")
+@click.option("--declarative_base", help="Identificador da base declarativa do banco.")
+@click.option("--output_path", help="Diretório de saída para o backup.")
+def parquet_backup(db_url: str, declarative_base: str, output_path: str):
+    # Find base
+    Base = getattr(base, declarative_base)
 
     # Convert to Path
     output_path = Path(output_path)
@@ -38,7 +35,7 @@ def parquet_backup(db: str = None, output_path: str = None):
     out_dir.mkdir(exist_ok=True)
 
     # Write each table as a parquet
-    engine = sa.create_engine(db)
+    engine = sa.create_engine(db_url)
     for table_name, table in Base.metadata.tables.items():
         # Query table
         stmt = str(sa.select(table).compile(engine))

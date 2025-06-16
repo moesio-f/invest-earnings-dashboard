@@ -3,11 +3,12 @@ from datetime import date
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import Numeric
 
-from .base import Base
+from invest_earning.database.base import WalletBase
+
 from .entities import EconomicIndex
 
 
-class EconomicData(Base):
+class EconomicData(WalletBase):
     __tablename__ = "economic_data"
 
     index: Mapped[EconomicIndex] = mapped_column(

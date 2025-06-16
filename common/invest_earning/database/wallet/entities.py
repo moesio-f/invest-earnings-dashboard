@@ -1,18 +1,6 @@
-"""Classe que representa um ativo
-que faz distribuição de proventos.
-"""
+"""Enumerações."""
 
-from enum import Enum
-from typing import Self
-
-
-class StrEnum(Enum):
-    @classmethod
-    def from_value(cls, value: str) -> Self:
-        try:
-            return cls[value]
-        except:
-            return next(k for k in cls if k.value == value)
+from invest_earning.database.utils import StrEnum
 
 
 class AssetKind(StrEnum):

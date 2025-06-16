@@ -1,0 +1,16 @@
+"""Conexão com o banco."""
+
+import sqlalchemy as sa
+from fastapi import Depends
+
+from .config import DB_CONFIG
+
+engine = sa.create_engine(DB_CONFIG.db_url, connect_args={"check_same_thread": False})
+
+
+def get_db_session():
+    with sa.orm.Session(engine) as session:
+        yield session
+
+
+RequiresSession = Depends(get_db_session)
