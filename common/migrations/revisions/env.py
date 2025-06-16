@@ -1,7 +1,7 @@
 import os
 from logging.config import fileConfig
 
-from invest_earning.database.models import base
+from invest_earning.database import base
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
@@ -14,7 +14,7 @@ if config.config_file_name is not None:
 connection_string = os.environ["DATABASE_URL"]
 
 # Find target_metadata for current database
-target_metadata = getattr(base, config.config_ini_section["target_metadata"])
+target_metadata = getattr(base, config.get_main_option("target_metadata"))
 
 
 def run_migrations_offline() -> None:

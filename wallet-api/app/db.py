@@ -9,7 +9,7 @@ engine = sa.create_engine(DB_CONFIG.db_url, connect_args={"check_same_thread": F
 
 
 def get_db_session():
-    with sa.orm.Session(engine) as session:
+    with sa.orm.Session(engine, expire_on_commit=False) as session:
         yield session
 
 
