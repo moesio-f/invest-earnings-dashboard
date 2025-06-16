@@ -6,6 +6,8 @@ de um facade.
 from datetime import date
 
 import pandas as pd
+from app.db import RequiresSession
+from app.dispatcher import NotificationDispatcher
 from fastapi import APIRouter, Response
 from invest_earning.database.wallet import (
     Asset,
@@ -14,13 +16,10 @@ from invest_earning.database.wallet import (
     EarningKind,
     EconomicData,
     EconomicIndex,
+    Position,
     Transaction,
     TransactionKind,
-    Position,
 )
-
-from app.db import RequiresSession
-from app.dispatcher import NotificationDispatcher
 
 from . import utils
 from .models import (
@@ -414,14 +413,10 @@ def list_economic_data(session=RequiresSession) -> list[EconomicSchemaV1]:
     return list(session.query(EconomicData).all())
 
 
-@position.get("/on/{date}")
-def position_on_date(date: date, session=RequiresSession) -> list[Position]:
-    return Position.get_position(session, date)
-
-
-@position.get("/current")
-def current_position(session=RequiresSession) -> list[Position]:
-    return Position.get_position(session)
+@position.get("/on/{reference_date}")
+def position_on_date(reference_date: date, session=RequiresSession) -> list[Position]:
+    """Retorna a posição de investimentos em uma data."""
+    return Position.get_position(session, reference_date)
 
 
 router.include_router(asset)
