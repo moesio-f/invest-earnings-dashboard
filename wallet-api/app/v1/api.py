@@ -16,6 +16,7 @@ from invest_earning.database.wallet import (
     EconomicIndex,
     Transaction,
     TransactionKind,
+    Position,
 )
 
 from app.db import RequiresSession
@@ -34,6 +35,7 @@ asset = APIRouter(prefix="/asset", tags=["v1 · Ativos"])
 earnings = APIRouter(prefix="/earnings", tags=["v1 · Proventos"])
 transactions = APIRouter(prefix="/transactions", tags=["v1 · Transações"])
 economic = APIRouter(prefix="/economic", tags=["v1 · Dados Econômicos"])
+position = APIRouter(prefix="/position", tags=["v1 · Posições"])
 
 
 @asset.get("/info/{b3_code}")
@@ -302,7 +304,7 @@ def update_transaction(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_transaction_update(transaction)
+    NotificationDispatcher.notify_transaction_update(transaction, updated_fields)
     return transaction
 
 
@@ -412,7 +414,18 @@ def list_economic_data(session=RequiresSession) -> list[EconomicSchemaV1]:
     return list(session.query(EconomicData).all())
 
 
+@position.get("/on/{date}")
+def position_on_date(date: date, session=RequiresSession) -> list[Position]:
+    return Position.get_position(session, date)
+
+
+@position.get("/current")
+def current_position(session=RequiresSession) -> list[Position]:
+    return Position.get_position(session)
+
+
 router.include_router(asset)
 router.include_router(earnings)
 router.include_router(transactions)
 router.include_router(economic)
+router.include_router(position)
