@@ -6,13 +6,13 @@ all: down build up
 
 
 down:
-	@docker compose -f ${COMPOSE} down
+	@docker compose -f ${COMPOSE} down --remove-orphans
 
 build:
 	@docker compose -f ${COMPOSE} build
 
 up:
-	@docker compose -f ${COMPOSE} up -d
+	@docker compose -f ${COMPOSE} up -d --remove-orphans
 
 logs:
 	@docker compose -f ${COMPOSE} logs -f

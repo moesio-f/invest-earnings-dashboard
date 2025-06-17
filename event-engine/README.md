@@ -9,9 +9,9 @@ Esse diretório contém o código para o motor de eventos. O código é organiza
     - [`router`](./engine/router): definição de roteadores;
     - [`utils`](./engine/utils): códigos utilitários, demais sub-pacotes só podem compartilhar códigos presentes aqui;
 
-### [`Router`](./engine/router/main.py)
+### [`Router`](./engine/router/router.py)
 
-Essa é classe do roteador principal. Esse roteador é responsável por analisar as mensagens colocados na fila de notificações e definir para qual canal essa notificação deve ser enviada, bem como realizar conversões na estrutura das mensagens se necessário.
+Essa é classe do roteador responsável por analisar as mensagens colocados na fila de notificações e definir para qual canal essa notificação deve ser enviada, bem como realizar conversões na estrutura das mensagens se necessário.
 
 Para utilizar o roteador, é necessário a configuração das seguintes variáveis de ambiente:
 
@@ -41,16 +41,13 @@ Esse processador espera que as mensagens passadas são um JSON com o seguinte sc
   "trigger": "wallet_update|dashboard_query",
   "update_information": {
     "entity": "asset|earning|transaction|economic_data",
-    "operation": "create|update|delete",
-    "context": {
-      "asset": "<b3_code>",
-      "index": "<economic_index>"
-    }
+    "operation": "CREATE|UPDATE|DELETE",
+    "target": "<b3_code>|<economic_index>"
   },
   "query_information": {
-    "kind": "asset|group",
+    "kind": "ASSET|GROUP",
     "entity": "<b3_code>|<asset_kind_str>|all",
-    "table": "<table_name>",
+    "table": "earning_yield|monthly_yield",
   }
 }
 ```
@@ -60,9 +57,7 @@ Esse processador espera que as mensagens passadas são um JSON com o seguinte sc
 - `update_information`: se a notificação é oriunda de atualizações da carteira, esse campo deve ser um dicionário não-vazio;
     - `entity`: qual entidade sofreu alteração;
     - `operation`: qual tipo da operação;
-    - `context`: contexto adicional da operação;
-        - `entity`: deve possuir o código B3 se a entidade alterada possui relação direta com o ativo;
-        - `index`: deve possuir o índice econômico se a entidade for um índice econômico;
+    - `target`: target da operação (código B3 do ativo subjacente ou índice econômico);
 - `query_information`: se a notificação for de uma query no dashboard, esse campo deve ser um dicionário não-vazio;
     - `kind`: indica qual tipo de análise buscada;
     - `entity`: indica qual a entidade associada a análise (i.e., código B3, nome do grupo, etc);

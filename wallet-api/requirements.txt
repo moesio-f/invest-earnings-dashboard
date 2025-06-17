@@ -1,3 +1,4 @@
 invest-earning-common>=0.0.1
 fastapi[standard]>=0.115.0
 pydantic>=2.11.0
+pydantic-settings>=2.9.0
