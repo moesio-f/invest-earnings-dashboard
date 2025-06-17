@@ -12,4 +12,10 @@ class DatabaseConfig(BaseSettings):
     db_url: str = "sqlite:////local.db"
 
 
+class DispatcherConfig(BaseSettings):
+    notification_queue: str = "notification.router.queue"
+    connection_url: str = "amqp://guest:guest@localhost:5672/?heartbeat=30"
+
+
 DB_CONFIG = DatabaseConfig()
+DISPATCHER_CONFIG = DispatcherConfig()

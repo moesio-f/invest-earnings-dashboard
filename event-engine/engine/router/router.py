@@ -31,15 +31,21 @@ class Router:
         self._yoc_exchange = yoc_exchange
         self._notification_pattern = re.compile(r"\[(?P<source>.+)\] (?P<message>.+)")
         self._wallet_pattern = re.compile(
-            r"(?P<operation>CREATE|UPDATE|DELETE) (?P<entity>\w+) WITH ID (?P<target>\w+).*",
+            r"(?P<operation>CREATED|UPDATED|DELETED) (?P<entity>\w+) WITH ID (?P<entity_id>\w+)(?: WITH REFERENCE TO (?P<reference>\w+) WITH ID (?P<reference_id>\w+))?",
         )
         self._dashboard_pattern = re.compile(
-            r"QUERY (?P<kind>ASSET|GROUP) (?P<entity>\w+) ON (?P<table>\w+)",
+            r"QUERIED (?P<kind>ASSET|GROUP) (?P<entity>\w+) ON (?P<table>\w+)",
         )
 
     def run(self):
         try:
+            logger.debug("Setting up connection for router...")
             self._setup_connection()
+            logger.info(
+                "Router has started. Listening to '%s' and publishing to '%s'.",
+                self._notif_queue,
+                self._yoc_queue,
+            )
             self._ch.start_consuming()
         finally:
             self._stop_connection()
@@ -50,11 +56,11 @@ class Router:
         self._ch = self._conn.channel()
 
         # Setup notification queue
-        self._ch.queue_declare(queue=self._notif_queue)
+        self._ch.queue_declare(queue=self._notif_queue, durable=True)
         self._ch.basic_consume(self._notif_queue, self._on_notification, auto_ack=False)
 
-        # Setup yoc queue
-        self._ch.queue_declare(queue=self._yoc_queue)
+        # Setup workers queues
+        self._ch.queue_declare(queue=self._yoc_queue, durable=True)
 
     def _stop_connection(self):
         if self._ch is not None:
@@ -76,7 +82,7 @@ class Router:
         if header_frame.content_type == "text/plain":
             # Read text
             data = body.decode(header_frame.content_encoding)
-            logger.debug(f'Received message: "{data}"')
+            logger.debug(f'Received message from queue: "{data}"')
 
             # Check formatting
             match = self._notification_pattern.match(data)
@@ -96,6 +102,12 @@ class Router:
                 if event:
                     self._send_event(event)
                     logger.debug(f"Sent event:\n{event.model_dump_json(indent=2)}")
+        else:
+            logger.debug(
+                "Message content_type (%s) didn't match "
+                "expected type (text/plain). Silently ignored.",
+                header_frame.content_type,
+            )
 
         # Work has been done
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
@@ -115,12 +127,12 @@ class Router:
 
         # If matched, add to data
         if match:
-            data[key] = match.groupdict({})
+            data[key] = match.groupdict()
 
         try:
             return AnalyticEvent(**data)
         except ValidationError as e:
-            logger.warning(e)
+            logger.warning(f"Ignored source message due to validation error: {e}")
             return None
 
     def _send_event(self, event: AnalyticEvent):
@@ -131,5 +143,6 @@ class Router:
             properties=pika.BasicProperties(
                 content_type="application/json",
                 content_encoding="utf-8",
+                delivery_mode=pika.DeliveryMode.Persistent,
             ),
         )

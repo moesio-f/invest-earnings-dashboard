@@ -21,9 +21,9 @@ class WalletEntity(StrEnum):
 
 
 class DatabaseOperation(StrEnum):
-    CREATE = "CREATE"
-    UPDATE = "UPDATE"
-    DELETE = "DELETE"
+    CREATED = "CREATED"
+    UPDATED = "UPDATED"
+    DELETED = "DELETED"
 
 
 class QueryKind(StrEnum):
@@ -39,7 +39,9 @@ class AnalyticTable(StrEnum):
 class WalletUpdateInformation(BaseModel):
     entity: WalletEntity
     operation: DatabaseOperation
-    target: str
+    entity_id: str
+    reference: WalletEntity | None = None
+    reference_id: str | None = None
 
 
 class QueryInformation(BaseModel):
