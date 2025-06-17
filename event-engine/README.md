@@ -19,6 +19,7 @@ Para utilizar o roteador, é necessário a configuração das seguintes variáve
 | --- | --- |
 | `NOTIFICATION_QUEUE` | Fila que deve ser utilizada para o recebimento das notifações. |
 | `YOC_QUEUE` | Fila que deve ser utilizada para análises de YoC. |
+| `BROKER_URL` | URL para conexão com o broker. Deve conter autenticação. |
 
 
 ### [`YoCProcessor`](./engine/processors/yoc.py)

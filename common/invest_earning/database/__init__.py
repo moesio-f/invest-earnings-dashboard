@@ -3,6 +3,8 @@ from sqlalchemy import event
 # SQLite FK support
 from sqlalchemy.engine import Engine
 
+from . import analytic, logging, wallet
+
 
 @event.listens_for(Engine, "connect")
 def _set_sqlite_pragma(dbapi_connection, connection_record):

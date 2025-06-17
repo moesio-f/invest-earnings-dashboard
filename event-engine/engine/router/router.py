@@ -18,17 +18,13 @@ class Router:
         self,
         notification_queue: str,
         yoc_queue: str,
-        connection_url: str,
-        notification_exchange: str = "",
-        yoc_exchange: str = "",
+        broker_url: str,
     ):
         self._conn = None
         self._ch = None
-        self._url = connection_url
+        self._url = broker_url
         self._notif_queue = notification_queue
-        self._notif_exchange = notification_exchange
         self._yoc_queue = yoc_queue
-        self._yoc_exchange = yoc_exchange
         self._notification_pattern = re.compile(r"\[(?P<source>.+)\] (?P<message>.+)")
         self._wallet_pattern = re.compile(
             r"(?P<operation>CREATED|UPDATED|DELETED) (?P<entity>\w+) WITH ID (?P<entity_id>\w+)(?: WITH REFERENCE TO (?P<reference>\w+) WITH ID (?P<reference_id>\w+))?",
@@ -58,9 +54,6 @@ class Router:
         # Setup notification queue
         self._ch.queue_declare(queue=self._notif_queue, durable=True)
         self._ch.basic_consume(self._notif_queue, self._on_notification, auto_ack=False)
-
-        # Setup workers queues
-        self._ch.queue_declare(queue=self._yoc_queue, durable=True)
 
     def _stop_connection(self):
         if self._ch is not None:
@@ -137,7 +130,7 @@ class Router:
 
     def _send_event(self, event: AnalyticEvent):
         self._ch.basic_publish(
-            exchange=self._yoc_exchange,
+            exchange="",
             routing_key=self._yoc_queue,
             body=event.model_dump_json(indent=2),
             properties=pika.BasicProperties(

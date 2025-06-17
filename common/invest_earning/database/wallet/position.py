@@ -15,7 +15,7 @@ class Position:
     avg_price: float
 
     @classmethod
-    def get_position(
+    def get(
         cls, session: sa.orm.Session, reference_date: date = None
     ) -> list["Position"]:
         if reference_date is None:

@@ -416,7 +416,7 @@ def list_economic_data(session=RequiresSession) -> list[EconomicSchemaV1]:
 @position.get("/on/{reference_date}")
 def position_on_date(reference_date: date, session=RequiresSession) -> list[Position]:
     """Retorna a posição de investimentos em uma data."""
-    return Position.get_position(session, reference_date)
+    return Position.get(session, reference_date)
 
 
 router.include_router(asset)
