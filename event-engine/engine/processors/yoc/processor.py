@@ -92,10 +92,8 @@ class YoCProcessor:
             # Select processing function
             match event.trigger:
                 case AnalyticTrigger.wallet_update:
-                    logger.debug("Event is Wallet update.")
                     self._process_wallet_update(event.update_information)
                 case AnalyticTrigger.dashboard_query:
-                    logger.debug("Event is Dashboard query.")
                     self._process_dashboard_query(event.query_information)
 
         # Work has been done
@@ -106,6 +104,7 @@ class YoCProcessor:
             case DatabaseOperation.CREATED:
                 match event.entity:
                     case WalletEntity.earning:
+                        logger.debug("Creating single entry for new earning.")
                         self._create_or_update_earning_yield(int(event.entity_id))
                     case WalletEntity.transaction:
                         # A transaction might affect a variable number
@@ -115,11 +114,17 @@ class YoCProcessor:
                             self._wallet_engine, expire_on_commit=False
                         )
                         asession = sa.orm.Session(self._analytic_engine)
+                        affected = self._get_affected_earnings(
+                            int(event.entity_id), wallet_session=wsession
+                        )
 
                         # For each affected earning, update
-                        for earning_id in self._get_affected_earnings(
-                            int(event.entity_id), wallet_session=wsession
-                        ):
+                        logger.debug(
+                            "Transaction affects %d earnings. Create or update "
+                            "entry for each one in a single transaction.",
+                            len(affected),
+                        )
+                        for earning_id in affected:
                             self._create_or_update_earning_yield(
                                 earning_id,
                                 wallet_session=wsession,
@@ -127,6 +132,9 @@ class YoCProcessor:
                             )
 
                         # Commit changes and close sessions
+                        logger.debug(
+                            "Commiting changes of affected earnings to database."
+                        )
                         wsession.close()
                         asession.commit()
                         asession.close()
@@ -185,6 +193,15 @@ class YoCProcessor:
         # Position is required for yield. There might be cases
         #   where the user doesn't hold any shares for the asset,
         #   in such cases a default position of 0 is returned.
+        def _get_default() -> Position:
+            logger.debug(
+                "No shares found for asset %s on earning %d. "
+                "Yield will contain zero data.",
+                earning.asset_b3_code,
+                earning.id,
+            )
+            return Position(b3_code=earning.asset_b3_code, shares=0, avg_price=0.0)
+
         position = next(
             (
                 p
@@ -193,7 +210,7 @@ class YoCProcessor:
                 )
                 if p.b3_code == earning.asset_b3_code
             ),
-            Position(b3_code=earning.asset_b3_code, shares=0, avg_price=0.0),
+            _get_default(),
         )
 
         # Economic data is also needed
