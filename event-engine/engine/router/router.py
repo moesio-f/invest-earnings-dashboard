@@ -58,6 +58,7 @@ class Router:
     def _stop_connection(self):
         if self._ch is not None:
             self._ch.stop_consuming()
+            self._ch.close()
             self._ch = None
 
         if self._conn is not None:

@@ -70,6 +70,7 @@ class YoCProcessor:
     def _stop_connections(self):
         if self._ch is not None:
             self._ch.stop_consuming()
+            self._ch.close()
             self._ch = None
 
         if self._conn is not None:
@@ -89,10 +90,11 @@ class YoCProcessor:
             )
 
             # Select processing function
-            if event.trigger == AnalyticTrigger.wallet_update:
-                self._process_wallet_update(event.update_information)
-            elif event.trigger == AnalyticTrigger.dashboard_query:
-                self._process_dashboard_query(event.query_information)
+            match event.trigger:
+                case AnalyticTrigger.wallet_update:
+                    self._process_wallet_update(event.update_information)
+                case AnalyticTrigger.dashboard_query:
+                    self._process_dashboard_query(event.query_information)
 
         # Work has been done
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
@@ -126,8 +128,6 @@ class YoCProcessor:
                         wsession.close()
                         asession.commit()
                         asession.close()
-                    case _:
-                        return
             case DatabaseOperation.UPDATED:
                 ...
             case DatabaseOperation.DELETED:

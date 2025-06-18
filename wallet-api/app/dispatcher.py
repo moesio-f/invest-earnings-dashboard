@@ -25,6 +25,10 @@ class NotificationDispatcher:
         # Create temporary queue
         self._ch.queue_declare("", auto_delete=True)
 
+    def close(self):
+        self._ch.close()
+        self._conn.close()
+
     def notify_asset_create(self, asset: Asset):
         self._notify(self.Operation.CREATED, Asset, asset.b3_code)
 
@@ -125,7 +129,9 @@ class NotificationDispatcher:
 
 
 def get_dispatcher() -> NotificationDispatcher:
-    yield NotificationDispatcher()
+    dispatcher = NotificationDispatcher()
+    yield dispatcher
+    dispatcher.close()
 
 
 RequiresDispatcher = Depends(get_dispatcher)
