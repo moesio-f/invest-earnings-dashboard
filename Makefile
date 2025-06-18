@@ -17,14 +17,14 @@ up:
 logs:
 	@docker compose -f ${COMPOSE} logs -f ${SERVICE}
 
-bash:
-	@docker compose -f ${COMPOSE} exec app ${SERVICE}
+sh:
+	@docker compose -f ${COMPOSE} exec ${SERVICE} sh
 
 ps:
-	@docker compose ps
+	@docker compose -f ${COMPOSE} ps
 
 stats:
-	@docker compose stats
+	@docker compose -f ${COMPOSE} stats
 
 ips:
-	@docker network inspect -f '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}' invest-earnings_default
+	@docker network inspect -f '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}' invest-earnings-network

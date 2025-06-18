@@ -5,7 +5,7 @@ de um facade.
 
 from datetime import date
 
-import pandas as pd
+from app import utils as app_utils
 from app.db import RequiresSession
 from app.dispatcher import RequiresDispatcher
 from fastapi import APIRouter, Response
@@ -374,9 +374,7 @@ def add_economic_data(
     objects = []
     for d in data:
         d = d.dict()
-        d["reference_date"] = (
-            pd.to_datetime(d["reference_date"]) + pd.offsets.MonthEnd(0)
-        ).date()
+        d["reference_date"] = app_utils.to_last_day_of_the_month(d["reference_date"])
         objects.append(EconomicData(**d))
         session.add(objects[-1])
     session.commit()
@@ -404,7 +402,10 @@ def delete_economic_data(
     economic = (
         session.query(EconomicData)
         .where(EconomicData.index == economic_index)
-        .where(EconomicData.reference_date == reference_date)
+        .where(
+            EconomicData.reference_date
+            == app_utils.to_last_day_of_the_month(reference_date)
+        )
         .one()
     )
 

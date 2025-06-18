@@ -9,8 +9,6 @@ from invest_earning.database.wallet import Asset, Earning, EconomicData, Transac
 
 from .config import DISPATCHER_CONFIG
 
-_CONN = pika.BlockingConnection(pika.URLParameters(DISPATCHER_CONFIG.broker_url))
-
 
 class NotificationDispatcher:
     class Operation(Enum):
@@ -18,14 +16,24 @@ class NotificationDispatcher:
         UPDATED = "UPDATED"
         DELETED = "DELETED"
 
-    def __init__(self):
-        self._ch = _CONN.channel()
+    def __init__(self, close_after_any_notification: bool = False):
+        self._conn = pika.BlockingConnection(
+            pika.URLParameters(DISPATCHER_CONFIG.broker_url)
+        )
+        self._ch = self._conn.channel()
+        self._should_close = close_after_any_notification
 
         # Create temporary queue
         self._ch.queue_declare("", auto_delete=True)
 
     def close(self):
-        self._ch.close()
+        if self._ch is not None:
+            self._ch.close()
+            self._ch = None
+
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None
 
     def notify_asset_create(self, asset: Asset):
         self._notify(self.Operation.CREATED, Asset, asset.b3_code)
@@ -117,9 +125,13 @@ class NotificationDispatcher:
             ),
         )
 
+        # Maybe the dispatcher is short-lived?
+        if self._should_close:
+            self.close()
+
     @staticmethod
     def _economic_pk_to_str(economic: EconomicData) -> str:
-        return f"{economic.index}_{economic.reference_date.strftime('%Y_%m_%d')}"
+        return f"{economic.index.name}_{economic.reference_date.strftime('%Y_%m_%d')}"
 
     @staticmethod
     def _normalize_name(name: str) -> str:
@@ -127,6 +139,9 @@ class NotificationDispatcher:
 
 
 def get_dispatcher() -> NotificationDispatcher:
+    # AMQP connections are currently short-lived, which
+    #   is undesirable. I should probably change the
+    #   client from pika to one that supports multi-threading.
     dispatcher = NotificationDispatcher()
     yield dispatcher
     dispatcher.close()

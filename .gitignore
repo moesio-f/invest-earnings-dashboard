@@ -82,3 +82,7 @@ __pycache__/
 *.duckdb
 *.db
 bak/
+
+# Data
+data/*
+!data/economic_data.parquet

@@ -7,8 +7,10 @@ services:
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
       interval: 1m
-      timeout: 1m
+      timeout: 10s
       retries: 5
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
 
   migrations:
     build:
@@ -36,6 +38,7 @@ services:
         condition: service_completed_successfully
       broker:
         condition: service_healthy
+    restart: 'unless-stopped'
 
   router:
     build:
@@ -48,6 +51,7 @@ services:
     depends_on:
       broker:
         condition: service_healthy
+    restart: 'unless-stopped'
 
   yoc:
     build:
@@ -66,4 +70,12 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
+    restart: 'unless-stopped'
 
+
+networks:
+  default:
+    name: invest-earnings-network
+    ipam:
+      config:
+        - subnet: 172.28.28.0/24

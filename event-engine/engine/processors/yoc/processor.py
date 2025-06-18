@@ -2,6 +2,7 @@
 
 import json
 import logging
+from datetime import date, datetime
 
 import pika
 import sqlalchemy as sa
@@ -101,73 +102,101 @@ class YoCProcessor:
 
     def _process_wallet_update(self, event: WalletUpdateInformation):
         match event.operation:
-            case DatabaseOperation.CREATED:
+            case DatabaseOperation.CREATED | DatabaseOperation.UPDATED:
                 match event.entity:
                     case WalletEntity.earning:
-                        logger.debug("Creating single entry for new earning.")
+                        logger.debug("Create or update single yield entry for earning.")
                         self._create_or_update_earning_yield(int(event.entity_id))
                     case WalletEntity.transaction:
-                        # A transaction might affect a variable number
-                        #   of yields. We should manage sessions to guarantee
-                        #   all yields are updated or none at all.
-                        wsession = sa.orm.Session(
-                            self._wallet_engine, expire_on_commit=False
-                        )
-                        asession = sa.orm.Session(self._analytic_engine)
-                        affected = self._get_affected_earnings(
-                            int(event.entity_id), wallet_session=wsession
-                        )
-
-                        # For each affected earning, update
-                        logger.debug(
-                            "Transaction affects %d earnings. Create or update "
-                            "entry for each one in a single transaction.",
-                            len(affected),
-                        )
-                        for earning_id in affected:
-                            self._create_or_update_earning_yield(
-                                earning_id,
-                                wallet_session=wsession,
-                                analytic_session=asession,
+                        self._create_or_update_multiple(
+                            self._get_earnings_affected_by_transaction(
+                                int(event.entity_id)
                             )
-
-                        # Commit changes and close sessions
-                        logger.debug(
-                            "Commiting changes of affected earnings to database."
                         )
-                        wsession.close()
-                        asession.commit()
-                        asession.close()
-            case DatabaseOperation.UPDATED:
-                ...
+                    case WalletEntity.economic_data:
+                        # EconomicData has composite key, expect to have
+                        #   both values separated by a single `_`
+                        splits = event.entity_id.split("_", maxsplit=1)
+                        if len(splits) == 2:
+                            e_index = EconomicIndex.from_value(splits[0])
+                            ref_date = datetime.strptime(splits[1], "%Y_%m_%d").date()
+                            self._create_or_update_multiple(
+                                self._get_earnings_affected_by_economic(
+                                    e_index, ref_date
+                                )
+                            )
+                        else:
+                            logger.warning(
+                                "Unknown format for EconomicData "
+                                "ID: '%s'. Ignored event (nop).",
+                                event.entity_id,
+                            )
             case DatabaseOperation.DELETED:
                 ...
 
     def _process_dashboard_query(self, event: QueryInformation): ...
 
-    def _get_affected_earnings(
-        self, transaction_id: int, wallet_session: sa.orm.Session = None
+    def _get_earnings_affected_by_economic(
+        self, index: EconomicIndex, reference_date: date
     ) -> list[int]:
-        should_manage = wallet_session is None
-        if should_manage:
-            wallet_session = sa.orm.Session(self._wallet_engine)
+        # EarningYield only uses those indices
+        if index not in {EconomicIndex.cdi, EconomicIndex.ipca}:
+            return []
 
-        # Query with selectinload
-        transaction: Transaction = (
-            wallet_session.query(Transaction)
-            .options(sa.orm.selectinload(Transaction.entitled_to_earnings))
-            .where(Transaction.id == transaction_id)
-            .one_or_none()
+        # We must find which EarningYield rows are affected
+        with sa.orm.Session(self._analytic_engine) as analytic_session:
+            return [
+                ey.earning_id
+                for ey in analytic_session.query(EarningYield)
+                .where(
+                    sa.extract("month", EarningYield.hold_date)
+                    == sa.extract("month", reference_date)
+                )
+                .all()
+            ]
+
+    def _get_earnings_affected_by_transaction(
+        self,
+        transaction_id: int,
+    ) -> list[int]:
+        with sa.orm.Session(self._wallet_engine) as wallet_session:
+            # Query with selectinload
+            transaction: Transaction = (
+                wallet_session.query(Transaction)
+                .options(sa.orm.selectinload(Transaction.entitled_to_earnings))
+                .where(Transaction.id == transaction_id)
+                .one_or_none()
+            )
+
+            return (
+                list(set(e.id for e in transaction.entitled_to_earnings))
+                if transaction
+                else []
+            )
+
+    def _create_or_update_multiple(self, earnings_ids: list[int]):
+        # Create sessions to group all changes into single transaction
+        wsession = sa.orm.Session(self._wallet_engine, expire_on_commit=False)
+        asession = sa.orm.Session(self._analytic_engine)
+
+        # For each affected earning, update
+        logger.debug(
+            "Processing %d affected earnings by creating or "
+            "updating earning yield entry for each one.",
+            len(earnings_ids),
         )
+        for earning_id in earnings_ids:
+            self._create_or_update_earning_yield(
+                earning_id,
+                wallet_session=wsession,
+                analytic_session=asession,
+            )
 
-        if should_manage:
-            wallet_session.close()
-
-        return (
-            list(set(e.id for e in transaction.entitled_to_earnings))
-            if transaction
-            else []
-        )
+        # Commit changes and close sessions
+        logger.debug("Commiting changes of affected earnings to database.")
+        wsession.close()
+        asession.commit()
+        asession.close()
 
     def _create_or_update_earning_yield(
         self,
@@ -243,7 +272,7 @@ class YoCProcessor:
         ir_adjusted_value_per_share = (
             1 - earning.ir_percentage
         ) * earning.value_per_share
-        earning_yield = EarningYield(
+        data = dict(
             b3_code=earning.asset_b3_code,
             asset_kind=earning.asset.kind,
             earning_id=earning.id,
@@ -264,8 +293,16 @@ class YoCProcessor:
             ipca_on_hold_month=ipca_on_hold_month,
         )
 
-        # Add to session
-        analytic_session.add(earning_yield)
+        # Check if object already exists
+        earning_yield = analytic_session.get(EarningYield, earning_id)
+
+        # If it exists, simply update
+        if earning_yield is not None:
+            for k, v in data.items():
+                setattr(earning_yield, k, v)
+        else:
+            # Otherwise, create new one
+            analytic_session.add(EarningYield(**data))
 
         # Save state (if it exists, will be updated)
         if should_manage:
