@@ -2,7 +2,6 @@ import functools
 
 import pandas as pd
 import streamlit as st
-
 from app.dashboard import utils
 from app.dashboard.api import api
 from app.dashboard.components import dataframes as cdf

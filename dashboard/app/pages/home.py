@@ -1,7 +1,6 @@
 from datetime import date
 
 import streamlit as st
-
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard import utils
 from app.dashboard.api import api

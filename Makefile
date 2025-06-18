@@ -15,8 +15,13 @@ up:
 	@docker compose -f ${COMPOSE} up -d --remove-orphans
 
 logs:
-	@docker compose -f ${COMPOSE} logs -f
+	@docker compose -f ${COMPOSE} logs -f ${SERVICE}
 
 bash:
-	@docker compose -f ${COMPOSE} exec app bash
+	@docker compose -f ${COMPOSE} exec app ${SERVICE}
 
+ps:
+	@docker compose ps
+
+stats:
+	@docker compose states

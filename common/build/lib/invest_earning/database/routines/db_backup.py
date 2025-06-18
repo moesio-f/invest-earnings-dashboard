@@ -10,6 +10,7 @@ from pathlib import Path
 import click
 import pandas as pd
 import sqlalchemy as sa
+
 from invest_earning.database import base
 
 LOGGER = logging.getLogger(__name__)

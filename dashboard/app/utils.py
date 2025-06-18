@@ -4,7 +4,6 @@ from io import StringIO
 from typing import Callable
 
 import pandas as pd
-
 from app.dashboard.api import api
 from app.dashboard.state import Manager, ScopedState
 from app.dashboard.state.proxies import ProxiedValue, StateProxy

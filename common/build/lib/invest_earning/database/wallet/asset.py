@@ -5,10 +5,11 @@ from __future__ import annotations
 from datetime import date
 from typing import List, Optional
 
-from invest_earning.database.base import WalletBase
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import BigInteger, Integer, Numeric
+
+from invest_earning.database.base import WalletBase
 
 from .entities import AssetKind, EarningKind, TransactionKind
 

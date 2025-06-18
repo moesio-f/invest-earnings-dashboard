@@ -3,7 +3,6 @@ estados.
 """
 
 import streamlit as st
-
 from app.dashboard.state.proxies import ProxiedGlobal
 from app.dashboard.state.scoped_state import ScopedState
 

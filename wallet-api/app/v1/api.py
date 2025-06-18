@@ -6,6 +6,8 @@ de um facade.
 from datetime import date
 
 import pandas as pd
+from app.db import RequiresSession
+from app.dispatcher import RequiresDispatcher
 from fastapi import APIRouter, Response
 from invest_earning.database.wallet import (
     Asset,
@@ -18,9 +20,6 @@ from invest_earning.database.wallet import (
     Transaction,
     TransactionKind,
 )
-
-from app.db import RequiresSession
-from app.dispatcher import RequiresDispatcher
 
 from . import utils
 from .models import (

@@ -1,7 +1,6 @@
 import streamlit as st
-from pandera.typing import DataFrame
-
 from app.analytics.entities import EarningMetrics, MonthlyIndexYoC
+from pandera.typing import DataFrame
 
 
 def earning_global_metrics(

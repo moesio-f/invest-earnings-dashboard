@@ -5,16 +5,6 @@ import logging
 
 import pika
 import sqlalchemy as sa
-from invest_earning.database.analytic import EarningYield
-from invest_earning.database.wallet import (
-    Earning,
-    Transaction,
-    Asset,
-    Position,
-    EconomicData,
-    EconomicIndex,
-)
-
 from engine.utils.messages import (
     AnalyticEvent,
     AnalyticTable,
@@ -24,6 +14,15 @@ from engine.utils.messages import (
     QueryKind,
     WalletEntity,
     WalletUpdateInformation,
+)
+from invest_earning.database.analytic import EarningYield
+from invest_earning.database.wallet import (
+    Asset,
+    Earning,
+    EconomicData,
+    EconomicIndex,
+    Position,
+    Transaction,
 )
 
 logger = logging.getLogger(__name__)
@@ -88,12 +87,15 @@ class YoCProcessor:
             event = AnalyticEvent(
                 **json.loads(body.decode(header_frame.content_encoding))
             )
+            logger.info("Procesing event:\n%s", event.model_dump_json(indent=2))
 
             # Select processing function
             match event.trigger:
                 case AnalyticTrigger.wallet_update:
+                    logger.debug("Event is Wallet update.")
                     self._process_wallet_update(event.update_information)
                 case AnalyticTrigger.dashboard_query:
+                    logger.debug("Event is Dashboard query.")
                     self._process_dashboard_query(event.query_information)
 
         # Work has been done

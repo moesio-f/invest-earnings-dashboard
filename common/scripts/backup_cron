@@ -1,2 +1,0 @@
-25 * * * * sh -c ". /etc/environment; python -m app.routines.db_backup" >> /var/log/db_backup.log 2>&1
-# Empty line required to run the cron job

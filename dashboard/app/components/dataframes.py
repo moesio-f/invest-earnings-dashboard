@@ -2,12 +2,11 @@ from typing import Callable
 
 import pandas as pd
 import streamlit as st
-from pandera.typing import DataFrame
-
 from app.analytics.entities import EarningYield
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.state import Manager, ScopedState
 from app.db.models import EconomicData
+from pandera.typing import DataFrame
 
 _PREFIX = "__dataframe_{}"
 

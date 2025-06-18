@@ -2,7 +2,7 @@
 
 from datetime import date
 
-from invest_earning.database.wallet import EarningKind, TransactionKind, EconomicIndex
+from invest_earning.database.wallet import EarningKind, EconomicIndex, TransactionKind
 from pydantic import BaseModel, ConfigDict
 
 

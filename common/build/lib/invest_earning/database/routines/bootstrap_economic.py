@@ -3,12 +3,12 @@ geração de backups programáticas.
 """
 
 import logging
-from pathlib import Path
 
 import click
 import pandas as pd
 import sqlalchemy as sa
 import sqlalchemy.orm as sa_orm
+
 from invest_earning.database.wallet import EconomicData
 
 LOGGER = logging.getLogger(__name__)
@@ -16,10 +16,8 @@ LOGGER = logging.getLogger(__name__)
 
 @click.command()
 @click.option("--db_url", help="String de conexão com o banco de dados.")
-@click.option("--data_path", help="Caminho para os dados ecônomicos.")
+@click.argument("--data_path", help="Caminho para os dados ecônomicos.")
 def maybe_load_economic_data(db_url: str, data_path: str):
-    data_path = Path(data_path)
-
     # Write each parquet from data path to database
     engine = sa.create_engine(db_url)
     economic = data_path.joinpath(f"{EconomicData.__tablename__}.parquet")

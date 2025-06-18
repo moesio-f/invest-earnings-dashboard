@@ -2,10 +2,11 @@
 
 from datetime import date
 
-from invest_earning.database.base import AnalyticBase
-from invest_earning.database.wallet.entities import AssetKind, EarningKind
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import BigInteger, Integer, Numeric
+
+from invest_earning.database.base import AnalyticBase
+from invest_earning.database.wallet.entities import AssetKind, EarningKind
 
 
 class EarningYield(AnalyticBase):

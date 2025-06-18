@@ -5,14 +5,13 @@ de entidades.
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from pandera.typing import DataFrame
-
 from app.analytics.entities import (
     EarningYield,
     MonthlyEarning,
-    MonthlyYoC,
     MonthlyIndexYoC,
+    MonthlyYoC,
 )
+from pandera.typing import DataFrame
 
 
 def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):

@@ -5,7 +5,6 @@ com streamlit multi página.
 from datetime import date
 
 import streamlit as st
-
 from app.config import DASHBOARD_CONFIG as config
 
 # Set page global configuration

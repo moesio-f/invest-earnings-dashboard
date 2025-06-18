@@ -2,7 +2,6 @@ from datetime import date
 from typing import Callable
 
 import streamlit as st
-
 from app.config import DASHBOARD_CONFIG as config
 from app.dashboard.state import Manager, ScopedState
 from app.db.models import AssetKind, EarningKind, EconomicIndex, TransactionKind

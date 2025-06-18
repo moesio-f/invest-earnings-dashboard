@@ -18,7 +18,7 @@ class NotificationDispatcher:
 
     def __init__(self):
         self._conn = pika.BlockingConnection(
-            pika.URLParameters(DISPATCHER_CONFIG.connection_url)
+            pika.URLParameters(DISPATCHER_CONFIG.broker_url)
         )
         self._ch = self._conn.channel()
 

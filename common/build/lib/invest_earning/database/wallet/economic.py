@@ -1,8 +1,9 @@
 from datetime import date
 
-from invest_earning.database.base import WalletBase
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.types import Numeric
+
+from invest_earning.database.base import WalletBase
 
 from .entities import EconomicIndex
 
