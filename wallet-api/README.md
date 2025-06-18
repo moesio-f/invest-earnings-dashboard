@@ -10,4 +10,6 @@ O código fonte é disponibilizado em [`app`](./app), seguindo uma organização
 
 | Variável | Descrição |
 | --- | --- |
-| `DB_URL` | String de conexão com o banco de dados. O banco deve ter sido inicializado previamente utilizando as [`migrations`](../common/migrations). |
+| `DB_URL` | String de conexão com o banco de dados da carteira. |
+| `BROKER_URL` | String de conexão com o broker. |
+| `NOTIFICATION_QUEUE` | Fila que deve ser utilizada para o envio de notificações. |

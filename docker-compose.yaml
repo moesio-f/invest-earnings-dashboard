@@ -1,15 +1,81 @@
 services:
-  app:
-    build: .
+  broker:
+    image: rabbitmq:management
     environment:
-      DB_BACKEND: sqlite
-      DB_BACKUP_PATH: /code/backups
-      DB_BOOTSTRAP_DATA_PATH: /code/data/bootstrap/
-      CONNECTION_STRING: "sqlite:////code/database.db"
-      DASHBOARD_PORT: 8080
+      RABBITMQ_NODE_PORT: 5672
+      RABBITMQ_USE_LONGNAME: false
+    healthcheck:
+      test: rabbitmq-diagnostics check_port_connectivity
+      interval: 1m
+      timeout: 10s
+      retries: 5
     volumes:
-      - ./main.db:/code/database.db
-      - ./bak:/code/backups
+      - ./data/rabbitmq:/var/lib/rabbitmq
+
+  migrations:
+    build:
+      dockerfile: ./migrations.Dockerfile
+    environment:
+      WALLET_DB_URL: "sqlite:////code/wallet.db"
+      ANALYTIC_DB_URL: "sqlite:////code/analytic.db"
+    volumes:
+      - ./wallet.db:/code/wallet.db
+      - ./analytic.db:/code/analytic.db
+      - ./data/:/code/data
+
+  wallet:
+    build:
+      dockerfile: ./wallet-api.Dockerfile
+    environment:
+      DB_URL: "sqlite:////code/wallet.db"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+    command: ["--port", "80"]
+    volumes:
+      - ./wallet.db:/code/wallet.db
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      broker:
+        condition: service_healthy
     restart: 'unless-stopped'
-    ports:
-      - 8082:8080
+
+  router:
+    build:
+      dockerfile: ./event-engine.Dockerfile
+      target: router
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+      YOC_QUEUE: "processor.yoc.queue"
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: 'unless-stopped'
+
+  yoc:
+    build:
+      dockerfile: ./event-engine.Dockerfile
+      target: yoc-processor
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      YOC_QUEUE: "processor.yoc.queue"
+      WALLET_DB_URL: "sqlite:////code/wallet.db"
+      ANALYTIC_DB_URL: "sqlite:////code/analytic.db"
+    volumes:
+      - ./wallet.db:/code/wallet.db
+      - ./analytic.db:/code/analytic.db
+    depends_on:
+      broker:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: 'unless-stopped'
+
+
+networks:
+  default:
+    name: invest-earnings-network
+    ipam:
+      config:
+        - subnet: 172.28.28.0/24

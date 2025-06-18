@@ -28,10 +28,12 @@ Essa é a classe que realiza análises relacionadas com o Yield on Cost (YoC) de
 
 | Variável | Descrição |
 | --- | --- |
+| `BROKER_URL` | URL para conexão com o broker. Deve conter autenticação. |
 | `YOC_QUEUE` | Fila com atividades necessárias da cálculo de YoC. |
+| `WALLET_DB_URL` | URL para conexão com o banco de dados da carteira. |
+| `ANALYTIC_DB_URL` | URL para conexão com o banco de dados para armazenamento de análises. |
 
 Esse processador é _stateless_, sempre que recebe uma solicitação faz a leitura do estado atual do banco e determina se algum trabalho deve ser realizado ou não.
-
 
 #### Estrutura das Mensagens
 
