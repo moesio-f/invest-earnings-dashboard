@@ -8,7 +8,7 @@ from datetime import date
 from app import utils as app_utils
 from app.db import RequiresSession
 from app.dispatcher import RequiresDispatcher
-from fastapi import APIRouter, Response
+from fastapi import APIRouter, HTTPException, Response
 from invest_earning.database.wallet import (
     Asset,
     AssetKind,
@@ -40,7 +40,10 @@ position = APIRouter(prefix="/position", tags=["v1 · Posições"])
 @asset.get("/info/{b3_code}")
 def get_asset(b3_code: str, session=RequiresSession) -> AssetSchemaV1:
     """Retorna dados do ativo."""
-    return session.query(Asset).where(Asset.b3_code == b3_code).one()
+    asset = session.query(Asset).where(Asset.b3_code == b3_code).one_or_none()
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Asset not found.")
+    return asset
 
 
 @asset.get("/list")
@@ -62,6 +65,10 @@ def create_asset(
     """Realiza a criação de um ativo."""
     if added is None:
         added = date.today()
+
+    # Check whether it already exists
+    if session.query(Asset).where(Asset.b3_code == b3_code).one_or_none() is not None:
+        raise HTTPException(status_code=400, detail="Asset already exists.")
 
     asset = Asset(
         b3_code=b3_code,
@@ -90,7 +97,10 @@ def update_asset(
     """Realiza a atualização de um ativo. Campos `null` são ignorados e não
     sofrem atualização.
     """
-    asset = session.query(Asset).where(Asset.b3_code == b3_code).one()
+    asset = session.query(Asset).where(Asset.b3_code == b3_code).one_or_none()
+
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Asset not found.")
 
     # Update fields
     for field, value in zip(
@@ -102,6 +112,7 @@ def update_asset(
 
     # Commit
     session.commit()
+
     return asset
 
 
@@ -117,7 +128,10 @@ def delete_asset(
 ):
     """Remove um ativo do sistema."""
     # Query
-    asset = session.query(Asset).where(Asset.b3_code == b3_code).one()
+    asset = session.query(Asset).where(Asset.b3_code == b3_code).one_or_none()
+
+    if asset is None:
+        raise HTTPException(status_code=404, detail="Asset not found.")
 
     # Delete
     session.delete(asset)
@@ -179,7 +193,11 @@ def update_earning(
     """Atualiza dados de um provento previamente cadastrado. Campos `null` não
     são atualizados.
     """
-    earning = session.query(Earning).where(Earning.id == earning_id).one()
+    earning = session.query(Earning).where(Earning.id == earning_id).one_or_none()
+
+    if earning is None:
+        raise HTTPException(status_code=404, detail="Earning not found.")
+
     updated_fields = dict()
 
     # Update fields
@@ -222,7 +240,10 @@ def delete_earning(
 ):
     """Remove um provento previamente cadastrado."""
     # Query transaction
-    earning = session.query(Earning).where(Earning.id == earning_id).one()
+    earning = session.query(Earning).where(Earning.id == earning_id).one_or_none()
+
+    if earning is None:
+        raise HTTPException(status_code=404, detail="Earning not found.")
 
     # Delete
     session.delete(earning)
@@ -297,8 +318,12 @@ def update_transaction(
     """Atualiza informações de uma transação envolvendo um ativo. Campos `null`
     não são alterados."""
     transaction = (
-        session.query(Transaction).where(Transaction.id == transaction_id).one()
+        session.query(Transaction).where(Transaction.id == transaction_id).one_or_none()
     )
+
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
+
     updated_fields = dict()
 
     # Update fields
@@ -333,8 +358,11 @@ def delete_transaction(
     """Remove uma transação previamente cadastrada."""
     # Query
     transaction = (
-        session.query(Transaction).where(Transaction.id == transaction_id).one()
+        session.query(Transaction).where(Transaction.id == transaction_id).one_or_none()
     )
+
+    if transaction is None:
+        raise HTTPException(status_code=404, detail="Transaction not found.")
 
     # Delete
     session.delete(transaction)
@@ -372,11 +400,28 @@ def add_economic_data(
 ) -> list[EconomicSchemaV1]:
     """Adiciona dados econômicos em bulk."""
     objects = []
-    for d in data:
+    for idx, d in enumerate(data):
         d = d.dict()
         d["reference_date"] = app_utils.to_last_day_of_the_month(d["reference_date"])
+
+        # Check whether it already exists
+        if (
+            session.query(EconomicData)
+            .where(EconomicData.index == d["index"])
+            .where(EconomicData.reference_date == d["reference_date"])
+            .one_or_none()
+            is not None
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail="Economic data already exists for "
+                f"<{d['index']}, {d['reference_date']}> (index={idx}).",
+            )
+
         objects.append(EconomicData(**d))
         session.add(objects[-1])
+
+    # Save all transactions
     session.commit()
 
     # Notify
@@ -406,8 +451,11 @@ def delete_economic_data(
             EconomicData.reference_date
             == app_utils.to_last_day_of_the_month(reference_date)
         )
-        .one()
+        .one_or_none()
     )
+
+    if economic is None:
+        raise HTTPException(status_code=404, detail="Economic data not found.")
 
     # Delete
     session.delete(economic)
