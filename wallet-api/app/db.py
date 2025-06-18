@@ -5,7 +5,7 @@ from fastapi import Depends
 
 from .config import DB_CONFIG
 
-engine = sa.create_engine(DB_CONFIG.db_url, connect_args={"check_same_thread": False})
+engine = sa.create_engine(DB_CONFIG.db_url)
 
 
 def get_db_session():
