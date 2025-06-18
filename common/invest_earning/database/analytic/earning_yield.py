@@ -12,18 +12,16 @@ from invest_earning.database.wallet.entities import AssetKind, EarningKind
 class EarningYield(AnalyticBase):
     __tablename__ = "earning_yield"
 
-    id = mapped_column(
-        BigInteger().with_variant(Integer, "sqlite"),
-        primary_key=True,
-        comment="ID automático da análise.",
-    )
-
     # Dados do ativo
     b3_code: Mapped[str] = mapped_column(index=True, comment="Código B3 do ativo.")
     asset_kind: Mapped[AssetKind] = mapped_column(index=True, comment="Tipo do ativo.")
 
     # Dados do provento
-    earning_id: Mapped[int] = mapped_column(comment="ID do provento.")
+    earning_id = mapped_column(
+        BigInteger().with_variant(Integer, "sqlite"),
+        primary_key=True,
+        comment="ID automático de provento.",
+    )
     earning_kind: Mapped[EarningKind] = mapped_column(
         index=True, comment="Tipo do provento."
     )
@@ -57,12 +55,12 @@ class EarningYield(AnalyticBase):
     )
 
     # Dados econômicos
-    cdi_on_hold_moth = mapped_column(
+    cdi_on_hold_month = mapped_column(
         Numeric(),
         nullable=False,
         comment="Variação do CDI no mês da data de custódia.",
     )
-    ipca_on_hold_moth = mapped_column(
+    ipca_on_hold_month = mapped_column(
         Numeric(),
         nullable=False,
         comment="Variação do CDI no mês da data de custódia.",

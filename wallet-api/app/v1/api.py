@@ -6,8 +6,6 @@ de um facade.
 from datetime import date
 
 import pandas as pd
-from app.db import RequiresSession
-from app.dispatcher import NotificationDispatcher
 from fastapi import APIRouter, Response
 from invest_earning.database.wallet import (
     Asset,
@@ -20,6 +18,9 @@ from invest_earning.database.wallet import (
     Transaction,
     TransactionKind,
 )
+
+from app.db import RequiresSession
+from app.dispatcher import RequiresDispatcher
 
 from . import utils
 from .models import (
@@ -57,6 +58,7 @@ def create_asset(
     description: str = "",
     added: date = None,
     session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> AssetSchemaV1:
     """Realiza a criação de um ativo."""
     if added is None:
@@ -73,7 +75,7 @@ def create_asset(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_asset_create(asset)
+    dispatcher.notify_asset_create(asset)
     return asset
 
 
@@ -109,7 +111,11 @@ def update_asset(
     response_class=Response,
     status_code=204,
 )
-def delete_asset(b3_code: str, session=RequiresSession):
+def delete_asset(
+    b3_code: str,
+    session=RequiresSession,
+    dispatcher=RequiresDispatcher,
+):
     """Remove um ativo do sistema."""
     # Query
     asset = session.query(Asset).where(Asset.b3_code == b3_code).one()
@@ -121,7 +127,7 @@ def delete_asset(b3_code: str, session=RequiresSession):
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_asset_delete(asset)
+    dispatcher.notify_asset_delete(asset)
 
 
 @earnings.post("/create/{asset_b3_code}")
@@ -133,6 +139,7 @@ def create_earning(
     ir_percentage: float,
     kind: EarningKind,
     session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> EarningSchemaV1:
     """Adiciona um novo provento para o ativo."""
     # Create earning
@@ -153,7 +160,7 @@ def create_earning(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_earning_create(earning)
+    dispatcher.notify_earning_create(earning)
 
     return earning
 
@@ -168,6 +175,7 @@ def update_earning(
     ir_percentage: float = None,
     kind: EarningKind = None,
     session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> EarningSchemaV1:
     """Atualiza dados de um provento previamente cadastrado. Campos `null` não
     são atualizados.
@@ -198,7 +206,7 @@ def update_earning(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_earning_update(earning, updated_fields)
+    dispatcher.notify_earning_update(earning, updated_fields)
 
     return earning
 
@@ -208,7 +216,11 @@ def update_earning(
     response_class=Response,
     status_code=204,
 )
-def delete_earning(earning_id: int, session=RequiresSession):
+def delete_earning(
+    earning_id: int,
+    session=RequiresSession,
+    dispatcher=RequiresDispatcher,
+):
     """Remove um provento previamente cadastrado."""
     # Query transaction
     earning = session.query(Earning).where(Earning.id == earning_id).one()
@@ -220,7 +232,7 @@ def delete_earning(earning_id: int, session=RequiresSession):
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_earning_delete(earning)
+    dispatcher.notify_earning_delete(earning)
 
 
 @earnings.get("/info/{asset_b3_code}")
@@ -247,6 +259,7 @@ def create_transaction(
     value_per_share: float,
     shares: int,
     session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> TransactionSchemaV1:
     """Cadastra uma nova transação envolvendo um ativo."""
     # Create transaction
@@ -266,7 +279,7 @@ def create_transaction(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_transaction_create(transaction)
+    dispatcher.notify_transaction_create(transaction)
 
     return transaction
 
@@ -280,6 +293,7 @@ def update_transaction(
     value_per_share: float = None,
     shares: int = None,
     session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> TransactionSchemaV1:
     """Atualiza informações de uma transação envolvendo um ativo. Campos `null`
     não são alterados."""
@@ -303,7 +317,7 @@ def update_transaction(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_transaction_update(transaction, updated_fields)
+    dispatcher.notify_transaction_update(transaction, updated_fields)
     return transaction
 
 
@@ -312,7 +326,11 @@ def update_transaction(
     response_class=Response,
     status_code=204,
 )
-def delete_transaction(transaction_id: int, session=RequiresSession):
+def delete_transaction(
+    transaction_id: int,
+    session=RequiresSession,
+    dispatcher=RequiresDispatcher,
+):
     """Remove uma transação previamente cadastrada."""
     # Query
     transaction = (
@@ -326,7 +344,7 @@ def delete_transaction(transaction_id: int, session=RequiresSession):
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_transaction_delete(transaction)
+    dispatcher.notify_transaction_delete(transaction)
 
 
 @transactions.get("/info/{asset_b3_code}")
@@ -349,7 +367,9 @@ def list_transactions(session=RequiresSession) -> list[TransactionSchemaV1]:
 
 @economic.post("/add")
 def add_economic_data(
-    data: list[EconomicSchemaV1], session=RequiresSession
+    data: list[EconomicSchemaV1],
+    session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ) -> list[EconomicSchemaV1]:
     """Adiciona dados econômicos em bulk."""
     objects = []
@@ -364,7 +384,7 @@ def add_economic_data(
 
     # Notify
     for obj in objects:
-        NotificationDispatcher.notify_economic_add(obj)
+        dispatcher.notify_economic_add(obj)
 
     return objects
 
@@ -375,7 +395,10 @@ def add_economic_data(
     status_code=204,
 )
 def delete_economic_data(
-    economic_index: EconomicIndex, reference_date: date, session=RequiresSession
+    economic_index: EconomicIndex,
+    reference_date: date,
+    session=RequiresSession,
+    dispatcher=RequiresDispatcher,
 ):
     """Remove dados econômicos para um dado índice em uma data."""
     # Query
@@ -393,7 +416,7 @@ def delete_economic_data(
     session.commit()
 
     # Notify
-    NotificationDispatcher.notify_economic_delete(economic)
+    dispatcher.notify_economic_delete(economic)
     return Response(status_code=200)
 
 

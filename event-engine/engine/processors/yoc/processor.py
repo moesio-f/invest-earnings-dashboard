@@ -5,6 +5,15 @@ import logging
 
 import pika
 import sqlalchemy as sa
+from invest_earning.database.analytic import EarningYield
+from invest_earning.database.wallet import (
+    Earning,
+    Transaction,
+    Asset,
+    Position,
+    EconomicData,
+    EconomicIndex,
+)
 
 from engine.utils.messages import (
     AnalyticEvent,
@@ -35,19 +44,19 @@ class YoCProcessor:
     def run(self):
         try:
             logger.debug("Setting up connection for YoC processor...")
-            self._setup_connection()
+            self._setup_connections()
             logger.info(
                 "YoC processor has started. Listening to '%s'.",
                 self._queue,
             )
             self._ch.start_consuming()
         finally:
-            self._stop_connection()
+            self._stop_connections()
 
     def _setup_connections(self):
         assert self._conn is None
-        assert self._wallet_session is None
-        assert self._analytic_session is None
+        assert self._wallet_engine is None
+        assert self._analytic_engine is None
 
         self._conn = pika.BlockingConnection(pika.URLParameters(self._broker_url))
         self._ch = self._conn.channel()
@@ -93,7 +102,30 @@ class YoCProcessor:
             case DatabaseOperation.CREATED:
                 match event.entity:
                     case WalletEntity.earning:
-                        ...
+                        self._create_or_update_earning_yield(int(event.entity_id))
+                    case WalletEntity.transaction:
+                        # A transaction might affect a variable number
+                        #   of yields. We should manage sessions to guarantee
+                        #   all yields are updated or none at all.
+                        wsession = sa.orm.Session(
+                            self._wallet_engine, expire_on_commit=False
+                        )
+                        asession = sa.orm.Session(self._analytic_engine)
+
+                        # For each affected earning, update
+                        for earning_id in self._get_affected_earnings(
+                            int(event.entity_id), wallet_session=wsession
+                        ):
+                            self._create_or_update_earning_yield(
+                                earning_id,
+                                wallet_session=wsession,
+                                analytic_session=asession,
+                            )
+
+                        # Commit changes and close sessions
+                        wsession.close()
+                        asession.commit()
+                        asession.close()
                     case _:
                         return
             case DatabaseOperation.UPDATED:
@@ -102,3 +134,121 @@ class YoCProcessor:
                 ...
 
     def _process_dashboard_query(self, event: QueryInformation): ...
+
+    def _get_affected_earnings(
+        self, transaction_id: int, wallet_session: sa.orm.Session = None
+    ) -> list[int]:
+        should_manage = wallet_session is None
+        if should_manage:
+            wallet_session = sa.orm.Session(self._wallet_engine)
+
+        # Query with selectinload
+        transaction: Transaction = (
+            wallet_session.query(Transaction)
+            .options(sa.orm.selectinload(Transaction.entitled_to_earnings))
+            .where(Transaction.id == transaction_id)
+            .one_or_none()
+        )
+
+        if should_manage:
+            wallet_session.close()
+
+        return (
+            list(set(e.id for e in transaction.entitled_to_earnings))
+            if transaction
+            else []
+        )
+
+    def _create_or_update_earning_yield(
+        self,
+        earning_id: int,
+        wallet_session: sa.orm.Session = None,
+        analytic_session: sa.orm.Session = None,
+    ):
+        assert (wallet_session is None) == (analytic_session is None)
+        should_manage = wallet_session is None
+
+        if should_manage:
+            wallet_session = sa.orm.Session(self._wallet_engine, expire_on_commit=False)
+            analytic_session = sa.orm.Session(self._analytic_engine)
+
+        # Data about the earning is required for the yield
+        earning: Earning = (
+            wallet_session.query(Earning)
+            .options(sa.orm.selectinload(Earning.asset))
+            .where(Earning.id == earning_id)
+            .one()
+        )
+
+        # Position is required for yield. There might be cases
+        #   where the user doesn't hold any shares for the asset,
+        #   in such cases a default position of 0 is returned.
+        position = next(
+            (
+                p
+                for p in Position.get(
+                    session=wallet_session, reference_date=earning.hold_date
+                )
+                if p.b3_code == earning.asset_b3_code
+            ),
+            Position(b3_code=earning.asset_b3_code, shares=0, avg_price=0.0),
+        )
+
+        # Economic data is also needed
+        economic = (
+            wallet_session.query(EconomicData)
+            .where(
+                sa.extract("month", EconomicData.reference_date)
+                == sa.extract("month", earning.hold_date)
+            )
+            .all()
+        )
+
+        # Maybe close session
+        if should_manage:
+            wallet_session.close()
+
+        # Compute required fields for earning yield
+        cdi_on_hold_month = 0.0
+        ipca_on_hold_month = 0.0
+        for e in economic:
+            v = e.percentage_change
+            match e.index:
+                case EconomicIndex.cdi:
+                    cdi_on_hold_month = v
+                case EconomicIndex.ipca:
+                    ipca_on_hold_month = v
+                case _:
+                    continue
+
+        ir_adjusted_value_per_share = (
+            1 - earning.ir_percentage
+        ) * earning.value_per_share
+        earning_yield = EarningYield(
+            b3_code=earning.asset_b3_code,
+            asset_kind=earning.asset.kind,
+            earning_id=earning.id,
+            earning_kind=earning.kind,
+            hold_date=earning.hold_date,
+            payment_date=earning.payment_date,
+            ir=earning.ir_percentage,
+            value_per_share=earning.value_per_share,
+            ir_adjusted_value_per_share=ir_adjusted_value_per_share,
+            shares=position.shares,
+            avg_price=position.avg_price,
+            yoc=(
+                (100 * (ir_adjusted_value_per_share / position.shares))
+                if position.shares > 0
+                else 0.0
+            ),
+            cdi_on_hold_month=cdi_on_hold_month,
+            ipca_on_hold_month=ipca_on_hold_month,
+        )
+
+        # Add to session
+        analytic_session.add(earning_yield)
+
+        # Save state (if it exists, will be updated)
+        if should_manage:
+            analytic_session.commit()
+            analytic_session.close()

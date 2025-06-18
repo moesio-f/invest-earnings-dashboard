@@ -11,7 +11,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Obtain connection string
-connection_string = os.environ.get("DATABASE_URL", "")
+connection_string = os.environ.get("DB_URL", "")
 
 # Find target_metadata for current database
 target_metadata = getattr(base, config.get_main_option("target_metadata")).metadata

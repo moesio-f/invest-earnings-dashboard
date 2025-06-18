@@ -4,12 +4,13 @@ import re
 from enum import Enum
 
 import pika
+from fastapi import Depends
 from invest_earning.database.wallet import Asset, Earning, EconomicData, Transaction
 
 from .config import DISPATCHER_CONFIG
 
 
-class _NotificationDispatcher:
+class NotificationDispatcher:
     class Operation(Enum):
         CREATED = "CREATED"
         UPDATED = "UPDATED"
@@ -123,4 +124,8 @@ class _NotificationDispatcher:
         return "_".join(re.findall(r"[A-Z][a-z]+", name)).lower()
 
 
-NotificationDispatcher = _NotificationDispatcher()
+def get_dispatcher() -> NotificationDispatcher:
+    yield NotificationDispatcher()
+
+
+RequiresDispatcher = Depends(get_dispatcher)
