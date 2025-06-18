@@ -29,4 +29,4 @@ ENV YOC_QUEUE="processor.yoc.queue"
 ENV WALLET_DB_URL=""
 ENV ANALYTIC_DB_URL=""
 
-CMD ["engine.processor.yoc"]
+CMD ["engine.processors.yoc"]

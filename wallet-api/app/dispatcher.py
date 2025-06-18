@@ -9,6 +9,8 @@ from invest_earning.database.wallet import Asset, Earning, EconomicData, Transac
 
 from .config import DISPATCHER_CONFIG
 
+_CONN = pika.BlockingConnection(pika.URLParameters(DISPATCHER_CONFIG.broker_url))
+
 
 class NotificationDispatcher:
     class Operation(Enum):
@@ -17,17 +19,13 @@ class NotificationDispatcher:
         DELETED = "DELETED"
 
     def __init__(self):
-        self._conn = pika.BlockingConnection(
-            pika.URLParameters(DISPATCHER_CONFIG.broker_url)
-        )
-        self._ch = self._conn.channel()
+        self._ch = _CONN.channel()
 
         # Create temporary queue
         self._ch.queue_declare("", auto_delete=True)
 
     def close(self):
         self._ch.close()
-        self._conn.close()
 
     def notify_asset_create(self, asset: Asset):
         self._notify(self.Operation.CREATED, Asset, asset.b3_code)

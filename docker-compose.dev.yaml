@@ -6,9 +6,9 @@ services:
       RABBITMQ_USE_LONGNAME: false
     healthcheck:
       test: rabbitmq-diagnostics check_port_connectivity
-      interval: 1s
-      timeout: 3s
-      retries: 30
+      interval: 1m
+      timeout: 1m
+      retries: 5
 
   migrations:
     build:

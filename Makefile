@@ -24,4 +24,7 @@ ps:
 	@docker compose ps
 
 stats:
-	@docker compose states
+	@docker compose stats
+
+ips:
+	@docker network inspect -f '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}' invest-earnings_default
