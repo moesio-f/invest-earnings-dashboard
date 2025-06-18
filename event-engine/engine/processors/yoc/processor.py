@@ -8,17 +8,14 @@ import pika
 import sqlalchemy as sa
 from engine.utils.messages import (
     AnalyticEvent,
-    AnalyticTable,
     AnalyticTrigger,
     DatabaseOperation,
     QueryInformation,
-    QueryKind,
     WalletEntity,
     WalletUpdateInformation,
 )
 from invest_earning.database.analytic import EarningYield
 from invest_earning.database.wallet import (
-    Asset,
     Earning,
     EconomicData,
     EconomicIndex,
@@ -101,40 +98,89 @@ class YoCProcessor:
         channel.basic_ack(delivery_tag=method_frame.delivery_tag)
 
     def _process_wallet_update(self, event: WalletUpdateInformation):
-        match event.operation:
-            case DatabaseOperation.CREATED | DatabaseOperation.UPDATED:
-                match event.entity:
-                    case WalletEntity.earning:
-                        logger.debug("Create or update single yield entry for earning.")
-                        self._create_or_update_earning_yield(int(event.entity_id))
-                    case WalletEntity.transaction:
-                        self._create_or_update_multiple(
-                            self._get_earnings_affected_by_transaction(
-                                int(event.entity_id)
-                            )
-                        )
-                    case WalletEntity.economic_data:
-                        # EconomicData has composite key, expect to have
-                        #   both values separated by a single `_`
-                        splits = event.entity_id.split("_", maxsplit=1)
-                        if len(splits) == 2:
-                            e_index = EconomicIndex.from_value(splits[0])
-                            ref_date = datetime.strptime(splits[1], "%Y_%m_%d").date()
-                            self._create_or_update_multiple(
-                                self._get_earnings_affected_by_economic(
-                                    e_index, ref_date
-                                )
-                            )
-                        else:
-                            logger.warning(
-                                "Unknown format for EconomicData "
-                                "ID: '%s'. Ignored event (nop).",
-                                event.entity_id,
-                            )
-            case DatabaseOperation.DELETED:
-                ...
+        # Preprocessing of known instances of id formats
+        try:
+            int_event_id = int(event.entity_id)
+        except Exception:
+            int_event_id = None
+
+        # Pattern matching
+        match (event.operation, event.entity):
+            # Earning
+            case (
+                DatabaseOperation.CREATED | DatabaseOperation.UPDATED,
+                WalletEntity.earning,
+            ):
+                logger.debug(
+                    "Updating yield entry for earning with id %d.", int_event_id
+                )
+                self._create_or_update_earning_yield(int_event_id)
+            case (DatabaseOperation.DELETED, WalletEntity.earning):
+                logger.debug(
+                    "Dropping all earning yields entries where earning_id == %d.",
+                )
+                self._drop_earning_yield_where(EarningYield.earning_id == int_event_id)
+
+            # Transaction
+            case (
+                DatabaseOperation.CREATED | DatabaseOperation.UPDATED,
+                WalletEntity.transaction,
+            ):
+                logger.debug(
+                    "Bulk updating yield affected by transaction with id %d.",
+                    int_event_id,
+                )
+                self._create_or_update_multiple(
+                    self._get_earnings_affected_by_transaction(int_event_id)
+                )
+            case (DatabaseOperation.DELETED, WalletEntity.transaction):
+                if event.reference == WalletEntity.earning:
+                    logger.debug(
+                        "Bulk updating yield affected by deletion of "
+                        "transaction for asset %s.",
+                        event.reference_id,
+                    )
+                    self._create_or_update_multiple(
+                        self._get_earnings_affected_by_asset(event.reference_id)
+                    )
+                else:
+                    logger.warning(
+                        "Unhandled reference for Transaction "
+                        "deletion: reference=%s, id=%s. Ignored event.",
+                        event.reference,
+                        event.reference_id,
+                    )
+
+            # Economic data
+            case (_, WalletEntity.economic_data):
+                # EconomicData has composite key of form `index`_`date`
+                splits = event.entity_id.split("_", maxsplit=1)
+                if len(splits) == 2:
+                    e_index = EconomicIndex.from_value(splits[0])
+                    ref_date = datetime.strptime(splits[1], "%Y_%m_%d").date()
+                    self._create_or_update_multiple(
+                        self._get_earnings_affected_by_economic(e_index, ref_date)
+                    )
+                else:
+                    logger.warning(
+                        "Unknown format for EconomicData " "ID: '%s'. Ignored event.",
+                        event.entity_id,
+                    )
+
+            # Asset
+            case (DatabaseOperation.DELETED, WalletEntity.asset):
+                self._drop_earning_yield_where(EarningYield.b3_code == event.entity_id)
 
     def _process_dashboard_query(self, event: QueryInformation): ...
+
+    def _get_earnings_affected_by_asset(self, b3_code: str):
+        with sa.orm.Session(self._analytic_engine) as analytic_session:
+            return [
+                ey.earning_id
+                for ey in analytic_session.query(EarningYield)
+                .where(EarningYield.b3_code == b3_code)
+                .all()
+            ]
 
     def _get_earnings_affected_by_economic(
         self, index: EconomicIndex, reference_date: date
@@ -160,7 +206,6 @@ class YoCProcessor:
         transaction_id: int,
     ) -> list[int]:
         with sa.orm.Session(self._wallet_engine) as wallet_session:
-            # Query with selectinload
             transaction: Transaction = (
                 wallet_session.query(Transaction)
                 .options(sa.orm.selectinload(Transaction.entitled_to_earnings))
@@ -305,6 +350,24 @@ class YoCProcessor:
             analytic_session.add(EarningYield(**data))
 
         # Save state (if it exists, will be updated)
+        if should_manage:
+            analytic_session.commit()
+            analytic_session.close()
+
+    def _drop_earning_yield_where(
+        self,
+        clause,
+        analytic_session: sa.orm.Session = None,
+    ):
+        should_manage = analytic_session is None
+        if should_manage:
+            analytic_session = sa.orm.Session(self._analytic_engine)
+
+        objects = analytic_session.query(EarningYield).where(clause).all()
+        for obj in objects:
+            analytic_session.delete(obj)
+
+        logger.debug("Marked %d rows of EarningYield to deletion.", len(objects))
         if should_manage:
             analytic_session.commit()
             analytic_session.close()
