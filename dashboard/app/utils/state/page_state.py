@@ -2,8 +2,6 @@
 páginas da aplicação.
 """
 
-import uuid
-
 from .scoped_state import ScopedState
 from .state_manager import Manager
 
@@ -12,7 +10,7 @@ class PageState:
     def __init__(self, page_name: str):
         self._page = page_name
         self._state = Manager.get_page_state(self._page)
-        self._component_prefix = str(uuid.uuid4())
+        self._component_prefix = f"{self._page}_component"
 
     @property
     def variables(self) -> ScopedState:

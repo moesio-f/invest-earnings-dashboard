@@ -2,11 +2,13 @@
 
 import functools
 
+import logging
 import streamlit as st
 from app.utils.state import ScopedState
 from app.wallet import callbacks, constants
 from app.wallet.components import dataframes, dialogs
 from app.wallet.states.settings import SettingState
+
 
 # === Inicialização da página ===
 state = SettingState()
@@ -48,13 +50,11 @@ def select_asset(data: ScopedState):
             update_fn=callbacks.update_asset,
         )
 
-    state.update_state(update_assets=True)
-
 
 def select_transaction(data: ScopedState):
     event = data.event()["selection"]
     if event["rows"]:
-        item = state.variables.transactions.iloc[event["rows"][0]]
+        item = state.variables.filtered_transactions.iloc[event["rows"][0]]
         dialogs.transaction_update(
             asset_code=item.asset_b3_code,
             kind=item.kind,
@@ -66,13 +66,11 @@ def select_transaction(data: ScopedState):
             ),
         )
 
-    state.update_state(update_transactions=True)
-
 
 def select_earning(data: ScopedState):
     event = data.event()["selection"]
     if event["rows"]:
-        item = state.variables.earnings.iloc[event["rows"][0]]
+        item = state.variables.filtered_earnings.iloc[event["rows"][0]]
         dialogs.earning_update(
             asset_code=item.asset_b3_code,
             kind=item.kind,
@@ -84,7 +82,6 @@ def select_earning(data: ScopedState):
                 callbacks.update_earning, earning_id=item["id"].item()
             ),
         )
-    state.update_state(update_earnings=True)
 
 
 # =========================================================================
@@ -154,7 +151,7 @@ cols[1].pills(
 
 # Listagem de transações
 dataframes.transaction_dataframe(
-    state.variables.transactions,
+    state.variables.filtered_transactions,
     selection_mode="single-row",
     selection_callable=select_transaction,
 )
@@ -204,7 +201,7 @@ cols[1].pills(
 
 # Listagem de proventos
 dataframes.earning_dataframe(
-    state.variables.earnings,
+    state.variables.filtered_earnings,
     selection_mode="single-row",
     selection_callable=select_earning,
 )

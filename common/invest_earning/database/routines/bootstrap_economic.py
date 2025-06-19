@@ -44,6 +44,7 @@ def maybe_load_economic_data(db_url: str, data_path: str):
         # Create session and add all
         with sa.orm.Session(engine) as session:
             session.execute(sa.insert(EconomicData), df.to_dict(orient="records"))
+            session.commit()
         LOGGER.info("Inserted economic data into table database.")
     else:
         LOGGER.info("Economic data not empty, skipping routine.")

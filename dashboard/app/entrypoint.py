@@ -6,7 +6,6 @@ from datetime import date
 
 import streamlit as st
 from app.config import ST_CONFIG as config
-from app.utils.state import Manager
 
 # Set page global configuration
 st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
@@ -30,9 +29,6 @@ pg = st.navigation(
     ],
     expanded=False,
 )
-
-# Maybe clear state on page change
-Manager.clear_pages(destroy=True)
 
 # Run selected page
 pg.run()

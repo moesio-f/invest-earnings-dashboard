@@ -85,8 +85,8 @@ class SettingState(PageState):
             ["transaction", "earning"],
         ):
             try:
-                code = components[f"{st_key}_filter_code"]
-                kind = components[f"{st_key}_filter_kind"]
+                code = components[f"{st_key}_filter_code"].get()
+                kind = components[f"{st_key}_filter_kind"].get()
             except:
                 code, kind = default
 
@@ -96,9 +96,11 @@ class SettingState(PageState):
                 )
 
             key = f"{st_key}s"
-            if not self._state[key].empty:
-                self._state[key] = self._state[key][
-                    self._state[key].apply(_filter, axis=1)
+            filtered_key = f"filtered_{key}"
+            self._state[filtered_key] = self._state[key]
+            if len(self._state[filtered_key]) > 0:
+                self._state[filtered_key] = self._state[filtered_key][
+                    self._state[filtered_key].apply(_filter, axis=1)
                 ]
 
         # If we initialized, set flag
