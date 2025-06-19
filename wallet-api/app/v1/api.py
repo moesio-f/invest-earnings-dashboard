@@ -3,12 +3,14 @@ nativa em Python através
 de um facade.
 """
 
+import functools
 from datetime import date
+from typing import Annotated
 
 from app import utils as app_utils
 from app.db import RequiresSession
 from app.dispatcher import RequiresDispatcher
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import APIRouter, Body, HTTPException, Response
 from invest_earning.database.wallet import (
     Asset,
     AssetKind,
@@ -29,7 +31,9 @@ from .models import (
     TransactionSchemaV1,
 )
 
-router = APIRouter(prefix="/v1")
+EmbedBody = functools.partial(Body, embed=True)
+
+router = APIRouter()
 asset = APIRouter(prefix="/asset", tags=["v1 · Ativos"])
 earnings = APIRouter(prefix="/earnings", tags=["v1 · Proventos"])
 transactions = APIRouter(prefix="/transactions", tags=["v1 · Transações"])
@@ -54,11 +58,11 @@ def list_assets(session=RequiresSession) -> list[AssetSchemaV1]:
 
 @asset.post("/create")
 def create_asset(
-    b3_code: str,
-    name: str,
-    kind: AssetKind,
-    description: str = "",
-    added: date = None,
+    b3_code: Annotated[str, EmbedBody()],
+    name: Annotated[str, EmbedBody()],
+    kind: Annotated[AssetKind, EmbedBody()],
+    description: Annotated[str, EmbedBody()] = "",
+    added: Annotated[date, EmbedBody()] = None,
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> AssetSchemaV1:
@@ -88,10 +92,10 @@ def create_asset(
 @asset.patch("/update/{b3_code}")
 def update_asset(
     b3_code: str,
-    name: str = None,
-    description: str = None,
-    kind: AssetKind = None,
-    added: date = None,
+    name: Annotated[str, EmbedBody()] = None,
+    description: Annotated[str, EmbedBody()] = None,
+    kind: Annotated[AssetKind, EmbedBody()] = None,
+    added: Annotated[date, EmbedBody()] = None,
     session=RequiresSession,
 ) -> AssetSchemaV1:
     """Realiza a atualização de um ativo. Campos `null` são ignorados e não
@@ -143,14 +147,14 @@ def delete_asset(
     dispatcher.notify_asset_delete(asset)
 
 
-@earnings.post("/create/{asset_b3_code}")
+@earnings.post("/create")
 def create_earning(
-    asset_b3_code: str,
-    hold_date: date,
-    payment_date: date,
-    value_per_share: float,
-    ir_percentage: float,
-    kind: EarningKind,
+    asset_b3_code: Annotated[str, EmbedBody()],
+    hold_date: Annotated[date, EmbedBody()],
+    payment_date: Annotated[date, EmbedBody()],
+    value_per_share: Annotated[float, EmbedBody()],
+    ir_percentage: Annotated[float, EmbedBody()],
+    kind: Annotated[EarningKind, EmbedBody()],
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> EarningSchemaV1:
@@ -181,12 +185,12 @@ def create_earning(
 @earnings.post("/update/{earning_id}")
 def update_earning(
     earning_id: int,
-    asset_b3_code: str = None,
-    hold_date: date = None,
-    payment_date: date = None,
-    value_per_share: float = None,
-    ir_percentage: float = None,
-    kind: EarningKind = None,
+    asset_b3_code: Annotated[str, EmbedBody()] = None,
+    hold_date: Annotated[date, EmbedBody()] = None,
+    payment_date: Annotated[date, EmbedBody()] = None,
+    value_per_share: Annotated[float, EmbedBody()] = None,
+    ir_percentage: Annotated[float, EmbedBody()] = None,
+    kind: Annotated[EarningKind, EmbedBody()] = None,
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> EarningSchemaV1:
@@ -273,11 +277,11 @@ def list_earnings(session=RequiresSession) -> list[EarningSchemaV1]:
 
 @transactions.post("/create")
 def create_transaction(
-    asset_b3_code: str,
-    date: date,
-    kind: TransactionKind,
-    value_per_share: float,
-    shares: int,
+    asset_b3_code: Annotated[str, EmbedBody()],
+    date: Annotated[date, EmbedBody()],
+    kind: Annotated[TransactionKind, EmbedBody()],
+    value_per_share: Annotated[float, EmbedBody()],
+    shares: Annotated[int, EmbedBody()],
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> TransactionSchemaV1:
@@ -307,11 +311,11 @@ def create_transaction(
 @transactions.patch("/update/{transaction_id}")
 def update_transaction(
     transaction_id: int,
-    asset_b3_code: str = None,
-    date: date = None,
-    kind: TransactionKind = None,
-    value_per_share: float = None,
-    shares: int = None,
+    asset_b3_code: Annotated[str, EmbedBody()] = None,
+    date: Annotated[date, EmbedBody()] = None,
+    kind: Annotated[TransactionKind, EmbedBody()] = None,
+    value_per_share: Annotated[float, EmbedBody()] = None,
+    shares: Annotated[int, EmbedBody()] = None,
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> TransactionSchemaV1:
@@ -394,7 +398,7 @@ def list_transactions(session=RequiresSession) -> list[TransactionSchemaV1]:
 
 @economic.post("/add")
 def add_economic_data(
-    data: list[EconomicSchemaV1],
+    data: Annotated[list[EconomicSchemaV1], EmbedBody()],
     session=RequiresSession,
     dispatcher=RequiresDispatcher,
 ) -> list[EconomicSchemaV1]:

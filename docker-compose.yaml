@@ -7,6 +7,7 @@ services:
       POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
       - ./config/pg-init.d:/docker-entrypoint-initdb.d
+      - ./data/postgres:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready", "-p 5432"]
       interval: 1m
@@ -15,22 +16,23 @@ services:
       start_period: 40s
       start_interval: 1s
     shm_size: 128mb
-    restart: "unless-stopped"
+    restart: on-failure:1
 
   broker:
     image: rabbitmq:management
     environment:
       RABBITMQ_NODE_PORT: 5672
       RABBITMQ_USE_LONGNAME: false
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
     healthcheck:
-      test: rabbitmq-diagnostics check_port_connectivity
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
       interval: 1m
       timeout: 10s
       retries: 5
       start_period: 40s
       start_interval: 1s
-    volumes:
-      - ./data/rabbitmq:/var/lib/rabbitmq
+    restart: on-failure:1
 
   migrations:
     build:
@@ -38,6 +40,8 @@ services:
     environment:
       WALLET_DB_URL: "postgresql+psycopg://postgres@database/wallet"
       ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+    volumes:
+      - ./data:/code/data
     depends_on:
       database:
         condition: service_healthy
@@ -50,6 +54,13 @@ services:
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
     command: ["--port", "80"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries", "1", "--spider", "http://0.0.0.0:80/restricted/healthcheck"]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+      start_interval: 1s
     volumes:
       - ./wallet.db:/code/wallet.db
     depends_on:
@@ -57,7 +68,9 @@ services:
         condition: service_completed_successfully
       broker:
         condition: service_healthy
-    restart: "unless-stopped"
+    restart: on-failure:3
+    ports:
+      - "8083:80"
 
   router:
     build:
@@ -70,7 +83,7 @@ services:
     depends_on:
       broker:
         condition: service_healthy
-    restart: "unless-stopped"
+    restart: on-failure:3
 
   yoc:
     build:
@@ -86,7 +99,28 @@ services:
         condition: service_healthy
       migrations:
         condition: service_completed_successfully
-    restart: "unless-stopped"
+    restart: on-failure:3
+
+  dashboard:
+    build:
+      dockerfile: ./dashboard.Dockerfile
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      WALLET_API_URL: "http://wallet:80/"
+    command: ["--server.port", "80"]
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      wallet:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    restart: on-failure:3
+    ports:
+      - "8082:80"
+
 
 
 networks:

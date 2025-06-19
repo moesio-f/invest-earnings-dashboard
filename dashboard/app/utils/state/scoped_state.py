@@ -8,6 +8,16 @@ import streamlit as st
 
 
 class ScopedState:
+    """Estado com escopo.
+
+    Permite limitar o acesso de leitura e
+    escrita no estado global através de um
+    escopo.
+
+
+    :param scope: nome do escopo.
+    """
+
     def __init__(self, scope: str):
         self.scope = scope
         if self.scope not in st.session_state:
@@ -15,6 +25,9 @@ class ScopedState:
 
     def get(self, key, default=None):
         return self[key] if key in self else default
+
+    def keys(self) -> list[str]:
+        return list[st.session_state[self.scope]]
 
     def items(self) -> list[tuple]:
         return list((k, self[k]) for k in self)

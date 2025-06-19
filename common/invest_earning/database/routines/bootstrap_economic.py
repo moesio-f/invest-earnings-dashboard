@@ -8,8 +8,7 @@ from pathlib import Path
 import click
 import pandas as pd
 import sqlalchemy as sa
-import sqlalchemy.orm as sa_orm
-from invest_earning.database.wallet import EconomicData
+from invest_earning.database.wallet import EconomicData, EconomicIndex
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,12 +30,20 @@ def maybe_load_economic_data(db_url: str, data_path: str):
 
     # Load DataFrame and insert into DB if it is empty
     has_data = False
-    with sa_orm.Session(engine) as session:
+    with sa.orm.Session(engine) as session:
         has_data = session.query(EconomicData).count() > 0
 
     if not has_data:
+        # Load DataFrame
         df = pd.read_parquet(economic)
-        df.to_sql(EconomicData.__tablename__, engine, if_exists="append", index=False)
+
+        # Convert dtypes
+        df["index"] = df["index"].map(EconomicIndex.from_value)
+        df["reference_date"] = pd.to_datetime(df["reference_date"]).dt.date
+
+        # Create session and add all
+        with sa.orm.Session(engine) as session:
+            session.execute(sa.insert(EconomicData), df.to_dict(orient="records"))
         LOGGER.info("Inserted economic data into table database.")
     else:
         LOGGER.info("Economic data not empty, skipping routine.")

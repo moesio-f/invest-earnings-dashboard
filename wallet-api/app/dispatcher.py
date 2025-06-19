@@ -142,7 +142,7 @@ def get_dispatcher() -> NotificationDispatcher:
     # AMQP connections are currently short-lived, which
     #   is undesirable. I should probably change the
     #   client from pika to one that supports multi-threading.
-    dispatcher = NotificationDispatcher()
+    dispatcher = NotificationDispatcher(close_after_any_notification=True)
     yield dispatcher
     dispatcher.close()
 

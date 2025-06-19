@@ -2,13 +2,19 @@
 
 from datetime import date
 
-from invest_earning.database.wallet import EarningKind, EconomicIndex, TransactionKind
+from invest_earning.database.wallet import (
+    AssetKind,
+    EarningKind,
+    EconomicIndex,
+    TransactionKind,
+)
 from pydantic import BaseModel, ConfigDict
 
 
 class AssetSchemaV1(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     b3_code: str
+    kind: AssetKind
     name: str
     description: str
     added: date

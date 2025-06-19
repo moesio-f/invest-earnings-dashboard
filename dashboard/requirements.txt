@@ -1,0 +1,8 @@
+invest-earning-common>=0.0.1
+requests>=2.32.0
+streamlit>=1.44.0
+plotly>=6.0.1
+pandas>=2.2.0
+pydantic>=2.11.0
+pydantic-settings>=2.9.0
+pika>=1.3.0

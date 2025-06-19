@@ -5,7 +5,8 @@ com streamlit multi página.
 from datetime import date
 
 import streamlit as st
-from app.config import DASHBOARD_CONFIG as config
+from app.config import ST_CONFIG as config
+from app.utils.state import Manager
 
 # Set page global configuration
 st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
@@ -14,14 +15,15 @@ st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
 st.sidebar.markdown(f"> _Data do sistema: {date.today().strftime(config.DATE_FORMAT)}_")
 pg = st.navigation(
     [
-        st.Page("pages/home.py", title="Home", icon=":material/home:"),
+        # st.Page("dashboard/pages/home.py", title="Home", icon=":material/home:"),
+        # st.Page(
+        #    "dashboard/pages/economic_index.py",
+        #    title="Rentabilidade vs Indicadores",
+        #    icon=":material/monitoring:",
+        # ),
+        st.Page("wallet/pages/positions.py", title="Posição", icon=":material/wallet:"),
         st.Page(
-            "pages/economic_index.py",
-            title="Rentabilidade vs Indicadores",
-            icon=":material/monitoring:",
-        ),
-        st.Page(
-            "pages/settings.py",
+            "wallet/pages/settings.py",
             title="Configurações",
             icon=":material/settings:",
         ),
@@ -30,10 +32,7 @@ pg = st.navigation(
 )
 
 # Maybe clear state on page change
-if config.CLEAR_STATE_ON_PAGE_CHANGE:
-    from app.dashboard.state import Manager
-
-    Manager.clear_pages(destroy=True)
+Manager.clear_pages(destroy=True)
 
 # Run selected page
 pg.run()

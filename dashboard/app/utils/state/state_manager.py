@@ -3,11 +3,20 @@ estados.
 """
 
 import streamlit as st
-from app.dashboard.state.proxies import ProxiedGlobal
-from app.dashboard.state.scoped_state import ScopedState
+from app.utils.state.proxies import ProxiedGlobal
+from app.utils.state.scoped_state import ScopedState
 
 
 class _StateManager:
+    """Gerenciador de estados.
+
+    Essa classe permite o gerenciamento de
+    escopos. O streamlit provê formas de armazenar
+    estados em um dicionário global, essa classe
+    permite limitar o escopo de acesso aos atributos
+    dessa classe.
+    """
+
     _REGISTRY_KEY: str = "__SM_Registry"
     _PAGE_PREFIX: str = "__SM_Page"
     _DATA_PREFIX: str = "__SM_Data"
@@ -22,12 +31,34 @@ class _StateManager:
         st.session_state[self._REGISTRY_KEY] = self._registry
 
     def get_page_state(self, name: str) -> ScopedState:
+        """Retorna um escopo para ser utilizado para
+        armazenamento de dados de uma página.
+
+        :param name: nome da página.
+        :return: escopo de leitura e escrita.
+        """
         return self._get_state("pages", name)
 
     def get_data_state(self, name: str) -> ScopedState:
+        """Retorna um escopo para ser utilizado
+        para armazenamento de dados.
+
+        :param name: nome do conjunto de dados.
+        :return: escopo de leitura e escrita.
+        """
         return self._get_state("data", name)
 
     def get_proxied_data_state(self, name: str, prefix: str) -> ScopedState:
+        """Retorna um escopo de dados inicializado a partir
+        de chaves presentes em `streamlit.session_state`.
+
+        Esse escopo deve ser utilizado apenas para leitura.
+
+        :param name: nome do escopo.
+        :param prefix: prefixo das chaves a serem lidas do estado
+            global do streamlit.
+        :return: escopo para leitura.
+        """
         state = self.get_data_state(name)
 
         if not prefix.endswith("_"):

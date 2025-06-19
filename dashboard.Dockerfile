@@ -1,20 +1,18 @@
 FROM python:3.13-alpine
 
-ENV DB_URL=""
-ENV NOTIFICATION_QUEUE=""
+ENV WALLET_API_URL=""
 ENV BROKER_URL=""
 
 WORKDIR /code
 
 COPY ./common common
-COPY ./wallet-api/requirements.txt .
+COPY ./dashboard/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir ./common && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy source code to container
-COPY ./wallet-api/app app
+COPY ./dashboard/app app
 
-# Define entrypoint as fastapi run
-ENTRYPOINT ["fastapi", "run", "app/api.py", "--host", "0.0.0.0"]
+ENTRYPOINT ["python", "-m", "streamlit", "run", "app/entrypoint.py"]
