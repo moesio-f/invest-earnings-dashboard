@@ -21,12 +21,12 @@ class Position:
         if reference_date is None:
             reference_date = date.max
 
-        is_buy = sa.sql.func.IF(Transaction.kind == TransactionKind.buy, 1, 0)
+        is_buy = sa.sql.func.cast(Transaction.kind == TransactionKind.buy, sa.INTEGER)
         cte = (
             session.query(
                 Transaction.asset_b3_code.label("b3_code"),
                 sa.sql.func.sum(is_buy * Transaction.shares).label("buy"),
-                sa.sql.func.sum(sa.not_(is_buy) * Transaction.shares).label("sell"),
+                sa.sql.func.sum((1 - is_buy) * Transaction.shares).label("sell"),
                 sa.sql.func.sum(
                     is_buy * Transaction.value_per_share * Transaction.shares
                 ).label("total_buy"),
