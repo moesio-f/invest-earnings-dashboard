@@ -240,7 +240,7 @@ class Client:
 
         try:
             requests.post(
-                self._join(self._economic_url, "add"), json=data
+                self._join(self._economic_url, "add"), json=dict(data=data)
             ).raise_for_status()
         except Exception as e:
             logger.critical(

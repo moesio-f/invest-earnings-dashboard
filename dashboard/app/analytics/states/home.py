@@ -42,12 +42,6 @@ class HomeState(PageState):
                     columns=self._EY_COLUMNS,
                 )
 
-            # Add extra field
-            self.variables.earning_yield["total_earnings"] = (
-                self.variables.earning_yield.shares
-                * self.variables.earning_yield.ir_adjusted_value_per_share
-            )
-
             # Map enum columns
             for c in ["asset_kind", "earning_kind"]:
                 self.variables.earning_yield[c] = self.variables.earning_yield[c].map(

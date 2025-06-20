@@ -29,11 +29,11 @@ if len(state.variables.asset_codes) > 0:
 
     # Proventos por Classe de Ativo
     with cols[0]:
-        charts.earnings_by(state.variables.earning_yield, "asset_kind")
+        charts.earnings_by_asset_kind(state.variables.earning_yield)
 
     # Proventos por ativo
     with cols[1]:
-        charts.earnings_by(state.variables.earning_yield, "b3_code")
+        charts.earnings_by_asset_code(state.variables.earning_yield)
 
     # Proventos recebidos e a receber
     for title, cond in zip(

@@ -5,6 +5,7 @@ de entidades.
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from app.wallet import colors
 
 
 def wealth_history(df: pd.DataFrame):
@@ -26,6 +27,12 @@ def position_disitribution(df: pd.DataFrame):
     df = df.rename(
         columns=dict(asset_kind="Tipo", total_invested="Total Investido (R$)")
     )
-    fig = px.pie(df, values="Total Investido (R$)", names="Tipo")
+    fig = px.pie(
+        df,
+        values="Total Investido (R$)",
+        names="Tipo",
+        color="Tipo",
+        color_discrete_map=colors.AssetKindColors,
+    )
     fig.update_traces(textposition="inside", textinfo="percent+label")
     st.plotly_chart(fig)

@@ -236,8 +236,10 @@ class YoCProcessor:
                 ey.earning_id
                 for ey in analytic_session.query(EarningYield)
                 .where(
-                    sa.extract("month", EarningYield.hold_date)
-                    == sa.extract("month", reference_date)
+                    sa.extract("year", EarningYield.hold_date) == reference_date.year
+                )
+                .where(
+                    sa.extract("month", EarningYield.hold_date) == reference_date.month
                 )
                 .all()
             ]
@@ -332,6 +334,10 @@ class YoCProcessor:
         economic = (
             wallet_session.query(EconomicData)
             .where(
+                sa.extract("year", EconomicData.reference_date)
+                == sa.extract("year", earning.hold_date)
+            )
+            .where(
                 sa.extract("month", EconomicData.reference_date)
                 == sa.extract("month", earning.hold_date)
             )
@@ -370,6 +376,7 @@ class YoCProcessor:
             ir_adjusted_value_per_share=ir_adjusted_value_per_share,
             shares=position.shares,
             avg_price=position.avg_price,
+            total_earnings=position.shares * ir_adjusted_value_per_share,
             yoc=(
                 (100 * (ir_adjusted_value_per_share / position.avg_price))
                 if position.shares > 0

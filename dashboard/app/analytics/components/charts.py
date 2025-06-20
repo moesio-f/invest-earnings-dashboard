@@ -5,6 +5,7 @@ de entidades.
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from app.analytics import colors
 
 
 def monthly_earnings(df: pd.DataFrame, show_table: bool = False):
@@ -30,6 +31,7 @@ def monthly_earnings(df: pd.DataFrame, show_table: bool = False):
         x="Mês",
         y="Proventos (R$)",
         color="Grupo",
+        color_discrete_map=colors.AssetKindColors,
     )
     fig.update_xaxes(tickmode="array", tickvals=df["Mês"], tickformat="%b/%Y")
     st.plotly_chart(fig)
@@ -125,8 +127,21 @@ def bar_yoc_variation(df: pd.DataFrame, cumulative: bool, relative: bool):
     st.plotly_chart(fig)
 
 
-def earnings_by(df: pd.DataFrame, by: str):
-    fig = px.pie(df, names=by, values="total_earnings")
+def earnings_by_asset_kind(df: pd.DataFrame):
+    _earning_by(df, "asset_kind", colors.AssetKindColors)
+
+
+def earnings_by_asset_code(df: pd.DataFrame):
+    _earning_by(df, "b3_code")
+
+
+def _earning_by(df: pd.DataFrame, by: str, color_map: dict[str, str] = None):
+    if color_map is None:
+        color_map = dict()
+
+    fig = px.pie(
+        df, names=by, color=by, values="total_earnings", color_discrete_map=color_map
+    )
     fig.update_traces(textposition="inside", textinfo="label+percent+value")
     fig.update_layout(showlegend=False)
     st.plotly_chart(fig)

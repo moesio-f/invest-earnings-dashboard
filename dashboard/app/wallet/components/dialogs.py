@@ -327,7 +327,6 @@ def add_economic_data(
         st.pills(
             "Índice:",
             constants.EconomicIndices,
-            format_func=lambda e: e.value,
             key=f"{prefix}_index",
         )
         st.date_input(

@@ -47,6 +47,13 @@ class EarningYield(AnalyticBase):
         comment="Preço médio pago pelo ativo na data de custódia.",
     )
 
+    # Total dos proventos
+    total_earnings = mapped_column(
+        Numeric(precision=10, scale=5, asdecimal=False),
+        comment="Total a ser recebido na data de pagamento.",
+        nullable=True,
+    )
+
     # YoC
     yoc = mapped_column(
         Numeric(precision=10, scale=5, asdecimal=False),
