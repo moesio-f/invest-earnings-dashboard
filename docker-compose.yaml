@@ -110,6 +110,8 @@ services:
     environment:
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
       WALLET_API_URL: "http://wallet:80/"
+      ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      NOTIFICATION_QUEUE: "notification.router.queue"
     command: ["--server.port", "80"]
     depends_on:
       database:

@@ -8,10 +8,9 @@ from datetime import datetime
 from pathlib import Path
 
 import click
+import invest_earning.database
 import pandas as pd
 import sqlalchemy as sa
-
-import invest_earning.database
 
 LOGGER = logging.getLogger(__name__)
 N_MOST_RECENT_BACKUPS: int = 3

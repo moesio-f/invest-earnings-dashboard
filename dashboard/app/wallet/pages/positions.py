@@ -1,9 +1,9 @@
 """Página de visualização das posições."""
 
 import streamlit as st
+from app.wallet import constants
 from app.wallet.components import charts, dataframes
 from app.wallet.states.positions import PositionsState
-from app.wallet import constants
 
 # ===== Inicialização da página =====
 state = PositionsState()

@@ -18,7 +18,12 @@ LOGGING_CONFIG = {
         "app.wallet": {
             "handlers": ["default"],
             "level": "DEBUG",
-            "propagate": False,
+            "propagate": True,
+        },
+        "app.analytics": {
+            "handlers": ["default"],
+            "level": "DEBUG",
+            "propagate": True,
         },
     },
 }

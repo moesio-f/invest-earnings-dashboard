@@ -50,7 +50,7 @@ Esse processador espera que as mensagens passadas são um JSON com o seguinte sc
   "query_information": {
     "kind": "ASSET|GROUP",
     "entity": "<b3_code>|<asset_kind_str>|all",
-    "table": "earning_yield|monthly_yield",
+    "table": "earning_yield",
   }
 }
 ```

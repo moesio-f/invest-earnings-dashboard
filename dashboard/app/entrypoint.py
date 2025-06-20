@@ -6,6 +6,7 @@ from datetime import date
 
 import streamlit as st
 from app.config import ST_CONFIG as config
+from app.utils.state import Manager
 
 # Set page global configuration
 st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
@@ -14,9 +15,9 @@ st.set_page_config(page_title=config.PAGE_TITLE, layout=config.PAGE_LAYOUT)
 st.sidebar.markdown(f"> _Data do sistema: {date.today().strftime(config.DATE_FORMAT)}_")
 pg = st.navigation(
     [
-        # st.Page("dashboard/pages/home.py", title="Home", icon=":material/home:"),
+        st.Page("analytics/pages/home.py", title="Home", icon=":material/home:"),
         # st.Page(
-        #    "dashboard/pages/economic_index.py",
+        #    "analytics/pages/economic_index.py",
         #    title="Rentabilidade vs Indicadores",
         #    icon=":material/monitoring:",
         # ),
@@ -29,6 +30,9 @@ pg = st.navigation(
     ],
     expanded=False,
 )
+
+# Clear all pages
+Manager.clear_pages(destroy=True)
 
 # Run selected page
 pg.run()

@@ -6,9 +6,9 @@ import logging
 from pathlib import Path
 
 import click
+import invest_earning.database
 import pandas as pd
 import sqlalchemy as sa
-import invest_earning.database
 
 LOGGER = logging.getLogger(__name__)
 

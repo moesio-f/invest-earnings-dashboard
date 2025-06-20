@@ -8,7 +8,6 @@ from app.wallet import callbacks, constants
 from app.wallet.components import dataframes, dialogs
 from app.wallet.states.settings import SettingState
 
-
 # === Inicialização da página ===
 state = SettingState()
 state.update_state()

@@ -5,21 +5,32 @@ de entidades.
 import pandas as pd
 import plotly.express as px
 import streamlit as st
-from app.analytics.entities import (
-    EarningYield,
-    MonthlyEarning,
-    MonthlyIndexYoC,
-    MonthlyYoC,
-)
-from pandera.typing import DataFrame
 
 
-def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):
+def monthly_earnings(df: pd.DataFrame, show_table: bool = False):
+    # Maybe move calculation elsewhere?
+    df = df[
+        ["asset_kind", "payment_date", "ir_adjusted_value_per_share", "shares"]
+    ].copy()
+    df["total_earnings"] = df.shares * df.ir_adjusted_value_per_share
+    df["payment_date"] = (
+        pd.to_datetime(df["payment_date"])
+        + pd.offsets.MonthEnd(0)
+        - pd.offsets.MonthBegin(1)
+    )
+    df = (
+        df[["asset_kind", "payment_date", "total_earnings"]]
+        .groupby(["asset_kind", "payment_date"])
+        .sum()
+        .reset_index()
+    )
+
+    # Format DataFrame
     df = df.rename(
         columns=dict(
-            reference_date="Mês",
+            payment_date="Mês",
             total_earnings="Proventos (R$)",
-            group="Grupo",
+            asset_kind="Grupo",
         )
     )
     fig = px.bar(
@@ -63,7 +74,7 @@ def monthly_earnings(df: DataFrame[MonthlyEarning], show_table: bool = False):
 
 
 def monthly_yoc(
-    df: DataFrame[MonthlyYoC],
+    df: pd.DataFrame,
     cumulative: bool,
 ):
     # Cumsum
@@ -85,7 +96,7 @@ def monthly_yoc(
     st.plotly_chart(fig)
 
 
-def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative: bool):
+def bar_yoc_variation(df: pd.DataFrame, cumulative: bool, relative: bool):
     assert df.group.nunique() == 1
     df = df.drop(columns="group")
     cols = ["Yield on Cost (YoC)", "CDI", "CDB", "IPCA"]
@@ -122,7 +133,7 @@ def bar_yoc_variation(df: DataFrame[MonthlyIndexYoC], cumulative: bool, relative
     st.plotly_chart(fig)
 
 
-def earnings_by(df: DataFrame[EarningYield], by: str):
+def earnings_by(df: pd.DataFrame, by: str):
     fig = px.pie(df, names=by, values="total_earnings")
     fig.update_traces(textposition="inside", textinfo="label+percent+value")
     fig.update_layout(showlegend=False)

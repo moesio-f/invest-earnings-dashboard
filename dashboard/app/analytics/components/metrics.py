@@ -1,10 +1,11 @@
+"""Métricas."""
+
+import pandas as pd
 import streamlit as st
-from app.analytics.entities import EarningMetrics, MonthlyIndexYoC
-from pandera.typing import DataFrame
 
 
 def earning_global_metrics(
-    metrics: EarningMetrics,
+    metrics: dict,
 ):
 
     for container, label, value, help in zip(
@@ -20,10 +21,10 @@ def earning_global_metrics(
             "Yoc Médio (12M)",
         ],
         [
-            metrics.n_assets_with_earnings,
-            f"R$ {metrics.collected_earnings:.2f}",
-            f"R$ {metrics.to_collect_earnings:.2f}",
-            f"{metrics.mean_yoc:.2f}%",
+            metrics.get("n_assets_with_earnings", 0),
+            f"R$ {metrics.get('collected_earnings', 0.0):.2f}",
+            f"R$ {metrics.get('to_collect_earnings', 0.0):.2f}",
+            f"{metrics.get('mean_yoc', 0.0):.2f}%",
             *[
                 f"{getattr(metrics, f'mean_yoc_{k}'):.2f}%"
                 for k in ["current_month", "3m", "6m", "12m"]
@@ -43,7 +44,7 @@ def earning_global_metrics(
         container.metric(label, value, help=help)
 
 
-def montly_index_yoc_metrics(df: DataFrame[MonthlyIndexYoC]):
+def montly_index_yoc_metrics(df: pd.DataFrame):
     for container, label, value, help in zip(
         [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
         [

@@ -5,7 +5,7 @@ Esse diretório contém o código para a interface gráfica. O código é organi
 ## Organização
 
 - [`app`](./app): raiz da UI;
-    - [`dashboard`](./app/dashboard): dashboard para visualização de análises;
+    - [`analytics`](./app/analytics): dashboard para visualização de análises;
     - [`wallet`](./app/wallet): interfaces para gerenciamento e visualização da carteira;
 
 ## Variáveis de Ambiente
