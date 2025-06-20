@@ -371,7 +371,7 @@ class YoCProcessor:
             shares=position.shares,
             avg_price=position.avg_price,
             yoc=(
-                (100 * (ir_adjusted_value_per_share / position.shares))
+                (100 * (ir_adjusted_value_per_share / position.avg_price))
                 if position.shares > 0
                 else 0.0
             ),
