@@ -4,7 +4,8 @@ ENV BROKER_URL="amqp://guest:guest@broker:5672/?heartbeat=30"
 
 WORKDIR /code
 
-COPY ./common common
+COPY ./common/invest_earning common/invest_earning
+COPY ./common/pyproject.toml common/pyproject.toml
 COPY ./event-engine/engine engine
 COPY ./event-engine/requirements.txt .
 

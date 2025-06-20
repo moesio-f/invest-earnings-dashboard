@@ -23,3 +23,9 @@ stats:
 
 ips:
 	@docker network inspect -f '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}' invest-earnings-network
+
+create-backup:
+	@docker compose run --rm migrations sh common/scripts/dump_backup.sh
+
+load-backup:
+	@docker compose run --rm migrations sh common/scripts/load_backup.sh

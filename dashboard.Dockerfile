@@ -5,7 +5,8 @@ ENV BROKER_URL=""
 
 WORKDIR /code
 
-COPY ./common common
+COPY ./common/invest_earning common/invest_earning
+COPY ./common/pyproject.toml common/pyproject.toml
 COPY ./dashboard/requirements.txt .
 
 # Install dependencies

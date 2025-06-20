@@ -10,7 +10,8 @@ from pathlib import Path
 import click
 import pandas as pd
 import sqlalchemy as sa
-from invest_earning.database import base
+
+import invest_earning.database
 
 LOGGER = logging.getLogger(__name__)
 N_MOST_RECENT_BACKUPS: int = 3
@@ -22,7 +23,7 @@ N_MOST_RECENT_BACKUPS: int = 3
 @click.option("--output_path", help="Diretório de saída para o backup.")
 def parquet_backup(db_url: str, declarative_base: str, output_path: str):
     # Find base
-    Base = getattr(base, declarative_base)
+    Base = getattr(invest_earning.database.base, declarative_base)
 
     # Convert to Path
     output_path = Path(output_path)
@@ -31,7 +32,7 @@ def parquet_backup(db_url: str, declarative_base: str, output_path: str):
     now = datetime.now()
     out_dir = output_path.joinpath(now.date().isoformat())
     backup_meta = dict(timestamp=now.isoformat())
-    out_dir.mkdir(exist_ok=True)
+    out_dir.mkdir(exist_ok=True, parents=True)
 
     # Write each table as a parquet
     engine = sa.create_engine(db_url)

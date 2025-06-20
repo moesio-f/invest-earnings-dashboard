@@ -40,8 +40,11 @@ services:
     environment:
       WALLET_DB_URL: "postgresql+psycopg://postgres@database/wallet"
       ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      BOOTSTRAP_DATA_PATH: "/code/bootstrap"
+      BACKUP_DUMP_PATH: "/code/backup"
     volumes:
-      - ./data:/code/data
+      - ./data:/code/bootstrap
+      - ./bak:/code/backup
     depends_on:
       database:
         condition: service_healthy
