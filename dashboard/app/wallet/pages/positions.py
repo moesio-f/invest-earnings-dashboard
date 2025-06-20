@@ -16,6 +16,12 @@ st.title("Posição de Investimentos")
 # === Patrimônio e Distribuição ===
 col_a, col_b = st.columns(2)
 with col_a:
+    st.pills(
+        "Meses:",
+        ["3M", "6M", "12M", "24M"],
+        key=state.register_component("n_months_history"),
+        default="3M",
+    )
     charts.wealth_history(state.variables.history)
 
 with col_b:
@@ -29,4 +35,4 @@ for idx, kind in enumerate(constants.AssetKinds):
     ].drop(columns=["asset_kind"])
     if len(df) > 0:
         with st.expander(kind, expanded=(idx == 0)):
-            dataframes.position_dataframe(df)
+            dataframes.position_dataframe(df.sort_values("b3_code"))
