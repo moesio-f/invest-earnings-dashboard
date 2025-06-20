@@ -142,3 +142,24 @@ def economic_data_dataframe(economic_data: pd.DataFrame):
             ),
         },
     )
+
+
+def position_dataframe(position: pd.DataFrame):
+    st.dataframe(
+        position,
+        column_order=["b3_code", "asset_kind", "shares", "avg_price", "total_invested"],
+        hide_index=True,
+        column_config={
+            "b3_code": st.column_config.TextColumn(
+                "Ativo", pinned=True, width="medium"
+            ),
+            "asset_kind": st.column_config.TextColumn("Classe do Ativo"),
+            "shares": st.column_config.NumberColumn("Quantidade", format="%d"),
+            "avg_price": st.column_config.NumberColumn(
+                "Preço Médio (R$)", format="R$ %.2f"
+            ),
+            "total_invested": st.column_config.NumberColumn(
+                "Total Investido", format="R$ %.2f"
+            ),
+        },
+    )

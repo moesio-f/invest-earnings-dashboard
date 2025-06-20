@@ -21,56 +21,53 @@ class SettingState(PageState):
         update_earnings: bool = False,
         update_economic_data: bool = False,
     ):
-        # Find current state of componentes
-        components = self.components
-
         # Is page initialized?
-        initialize = not self._state.get("initialized", False)
+        initialize = not self.variables.get("initialized", False)
 
         # Update assets
         if update_assets or initialize:
-            self._state.assets = WalletApi.list_assets().sort_values(
+            self.variables.assets = WalletApi.list_assets().sort_values(
                 ["kind", "b3_code"]
             )
-            self._state.asset_codes = sorted(
-                self._state.assets.b3_code.sort_values().tolist()
+            self.variables.asset_codes = sorted(
+                self.variables.assets.b3_code.sort_values().tolist()
             )
             logger.debug(
                 "API returned %d assets (colums=%s).",
-                len(self._state.assets),
-                self._state.assets.columns,
+                len(self.variables.assets),
+                self.variables.assets.columns,
             )
 
         # Update transactions
         if update_transactions or initialize:
-            self._state.transactions = WalletApi.list_transactions().sort_values(
+            self.variables.transactions = WalletApi.list_transactions().sort_values(
                 "date", ascending=False
             )
             logger.debug(
                 "API returned %d transactions (colums=%s).",
-                len(self._state.transactions),
-                self._state.transactions.columns,
+                len(self.variables.transactions),
+                self.variables.transactions.columns,
             )
 
         # Update earnings
         if update_earnings or initialize:
-            self._state.earnings = WalletApi.list_earnings().sort_values(
+            self.variables.earnings = WalletApi.list_earnings().sort_values(
                 "payment_date", ascending=False
             )
             logger.debug(
                 "API returned %d earnings (colums=%s).",
-                len(self._state.earnings),
-                self._state.earnings.columns,
+                len(self.variables.earnings),
+                self.variables.earnings.columns,
             )
         # Update economic data
         if update_economic_data or initialize:
-            self._state.economic = WalletApi.list_economic().sort_values(
+            self.variables.economic = WalletApi.list_economic().sort_values(
                 "reference_date", ascending=False
             )
             logger.debug(
                 "API returned %d economic entries (colums=%s).",
-                len(self._state.economic),
-                self._state.economic.columns,
+                len(self.variables.economic),
+                self.variables.economic.columns,
             )
 
         # Apply filters
@@ -85,8 +82,8 @@ class SettingState(PageState):
             ["transaction", "earning"],
         ):
             try:
-                code = components[f"{st_key}_filter_code"].get()
-                kind = components[f"{st_key}_filter_kind"].get()
+                code = self.components[f"{st_key}_filter_code"].get()
+                kind = self.components[f"{st_key}_filter_kind"].get()
             except:
                 code, kind = default
 
@@ -97,12 +94,12 @@ class SettingState(PageState):
 
             key = f"{st_key}s"
             filtered_key = f"filtered_{key}"
-            self._state[filtered_key] = self._state[key]
-            if len(self._state[filtered_key]) > 0:
-                self._state[filtered_key] = self._state[filtered_key][
-                    self._state[filtered_key].apply(_filter, axis=1)
+            self.variables[filtered_key] = self.variables[key]
+            if len(self.variables[filtered_key]) > 0:
+                self.variables[filtered_key] = self.variables[filtered_key][
+                    self.variables[filtered_key].apply(_filter, axis=1)
                 ]
 
         # If we initialized, set flag
         if initialize:
-            self._state.initialized = True
+            self.variables.initialized = True
