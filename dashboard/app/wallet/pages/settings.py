@@ -2,7 +2,6 @@
 
 import functools
 
-import logging
 import streamlit as st
 from app.utils.state import ScopedState
 from app.wallet import callbacks, constants

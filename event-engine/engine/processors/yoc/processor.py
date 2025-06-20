@@ -276,16 +276,16 @@ class YoCProcessor:
             )
             return Position(b3_code=earning.asset_b3_code, shares=0, avg_price=0.0)
 
-        position = next(
-            (
+        try:
+            position = next(
                 p
                 for p in Position.get(
                     session=wallet_session, reference_date=earning.hold_date
                 )
                 if p.b3_code == earning.asset_b3_code
-            ),
-            _get_default(),
-        )
+            )
+        except StopIteration:
+            position = _get_default()
 
         # Economic data is also needed
         economic = (
