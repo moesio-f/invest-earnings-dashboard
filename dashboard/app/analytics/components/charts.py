@@ -9,21 +9,13 @@ import streamlit as st
 
 def monthly_earnings(df: pd.DataFrame, show_table: bool = False):
     # Maybe move calculation elsewhere?
-    df = df[
-        ["asset_kind", "payment_date", "ir_adjusted_value_per_share", "shares"]
-    ].copy()
-    df["total_earnings"] = df.shares * df.ir_adjusted_value_per_share
+    df = df[["asset_kind", "payment_date", "total_earnings"]].copy()
     df["payment_date"] = (
         pd.to_datetime(df["payment_date"])
         + pd.offsets.MonthEnd(0)
         - pd.offsets.MonthBegin(1)
     )
-    df = (
-        df[["asset_kind", "payment_date", "total_earnings"]]
-        .groupby(["asset_kind", "payment_date"])
-        .sum()
-        .reset_index()
-    )
+    df = df.groupby(["asset_kind", "payment_date"]).sum().reset_index()
 
     # Format DataFrame
     df = df.rename(

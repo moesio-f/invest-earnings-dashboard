@@ -55,12 +55,12 @@ class EarningYield(AnalyticBase):
 
     # Dados econômicos
     cdi_on_hold_month = mapped_column(
-        Numeric(),
+        Numeric(asdecimal=False),
         nullable=False,
         comment="Variação do CDI no mês da data de custódia.",
     )
     ipca_on_hold_month = mapped_column(
-        Numeric(),
+        Numeric(asdecimal=False),
         nullable=False,
         comment="Variação do CDI no mês da data de custódia.",
     )

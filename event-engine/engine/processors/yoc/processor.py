@@ -2,6 +2,7 @@
 
 import json
 import logging
+import random
 from datetime import date, datetime
 
 import pika
@@ -171,7 +172,47 @@ class YoCProcessor:
             case (DatabaseOperation.DELETED, WalletEntity.asset):
                 self._drop_earning_yield_where(EarningYield.b3_code == event.entity_id)
 
-    def _process_dashboard_query(self, event: QueryInformation): ...
+    def _process_dashboard_query(self, event: QueryInformation):
+        # TODO: improve checking and message processing
+        n_earnings = self._earnings_count()
+        n_yield = self._earning_yield_count()
+        has_missing_yield = n_yield < n_earnings
+        should_random_update = random.random() > 0.7
+
+        if has_missing_yield or should_random_update:
+            earnings_ids = self._all_earnings_ids()
+            if has_missing_yield:
+                logger.debug(
+                    "n_yield (%d) < n_earnings (%d), running analysis "
+                    "for all earnings (%d).",
+                    n_yield,
+                    n_earnings,
+                    len(earnings_ids),
+                )
+            else:
+                logger.debug(
+                    "Random update triggered by RNG. "
+                    "Running analyis for %d earnings.",
+                    len(earnings_ids),
+                )
+            self._create_or_update_multiple(earnings_ids)
+        else:
+            logger.debug(
+                "Database has yield for all earnings and "
+                "no random update triggered. Skipping."
+            )
+
+    def _all_earnings_ids(self) -> list[int]:
+        with sa.orm.Session(self._wallet_engine) as session:
+            return [e.id for e in session.query(Earning).all()]
+
+    def _earnings_count(self) -> int:
+        with sa.orm.Session(self._wallet_engine) as session:
+            return session.query(Earning).count()
+
+    def _earning_yield_count(self) -> int:
+        with sa.orm.Session(self._analytic_engine) as session:
+            return session.query(EarningYield).count()
 
     def _get_earnings_affected_by_asset(self, b3_code: str):
         with sa.orm.Session(self._analytic_engine) as analytic_session:
@@ -315,7 +356,7 @@ class YoCProcessor:
                     continue
 
         ir_adjusted_value_per_share = (
-            1 - earning.ir_percentage
+            1 - (earning.ir_percentage / 100)
         ) * earning.value_per_share
         data = dict(
             b3_code=earning.asset_b3_code,

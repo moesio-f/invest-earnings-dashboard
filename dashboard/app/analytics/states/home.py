@@ -14,6 +14,8 @@ logger = logging.getLogger(__name__)
 
 
 class HomeState(PageState):
+    _EY_COLUMNS = [c.key for c in EarningYield.__table__.columns]
+
     def __init__(self):
         super().__init__("home")
         self.variables.today = date.today()
@@ -33,8 +35,23 @@ class HomeState(PageState):
 
                 # Get earning yield for previous N months
                 self.variables.earning_yield = pd.DataFrame(
-                    [ey._mapping for ey in session.query(EarningYield).all()],
-                    columns=[c.key for c in EarningYield.__table__.columns],
+                    [
+                        {k: getattr(ey, k) for k in self._EY_COLUMNS}
+                        for ey in session.query(EarningYield).all()
+                    ],
+                    columns=self._EY_COLUMNS,
+                )
+
+            # Add extra field
+            self.variables.earning_yield["total_earnings"] = (
+                self.variables.earning_yield.shares
+                * self.variables.earning_yield.ir_adjusted_value_per_share
+            )
+
+            # Map enum columns
+            for c in ["asset_kind", "earning_kind"]:
+                self.variables.earning_yield[c] = self.variables.earning_yield[c].map(
+                    lambda v: v.value
                 )
 
             # Get asset codes

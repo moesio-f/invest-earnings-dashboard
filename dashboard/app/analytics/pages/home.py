@@ -43,7 +43,7 @@ if len(state.variables.asset_codes) > 0:
             state.variables.current_month_ey.payment_date > state.variables.today,
         ],
     ):
-        df = state.current_month_ey[cond]
+        df = state.variables.current_month_ey[cond]
         st.markdown(f"### {title} no Mês: `R$ {df.total_earnings.sum():.2f}`")
         dataframes.earning_yield_dataframe(df)
 

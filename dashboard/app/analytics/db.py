@@ -81,7 +81,7 @@ def get_session(**session_kwargs) -> sa.orm.Session:
             ch.basic_publish(
                 exchange="",
                 routing_key=config.NOTIFICATION_QUEUE,
-                body=f"QUERIED {kind} {entity} ON {table}",
+                body=f"[dashboard] QUERIED {kind} {entity} ON {table}",
                 properties=pika.BasicProperties(
                     content_type="text/plain",
                     content_encoding="utf-8",

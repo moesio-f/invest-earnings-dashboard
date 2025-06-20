@@ -26,7 +26,7 @@ def earning_global_metrics(
             f"R$ {metrics.get('to_collect_earnings', 0.0):.2f}",
             f"{metrics.get('mean_yoc', 0.0):.2f}%",
             *[
-                f"{getattr(metrics, f'mean_yoc_{k}'):.2f}%"
+                f"{getattr(metrics, f'mean_yoc_{k}', 0.0):.2f}%"
                 for k in ["current_month", "3m", "6m", "12m"]
             ],
         ],
