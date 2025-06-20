@@ -129,7 +129,7 @@ def earning_dataframe(
 
 def economic_data_dataframe(economic_data: pd.DataFrame):
     st.dataframe(
-        economic_data.sort_values(["index", "reference_date"]),
+        economic_data,
         hide_index=True,
         column_config={
             "index": st.column_config.TextColumn("Índice Econômico", pinned=True),
@@ -139,9 +139,6 @@ def economic_data_dataframe(economic_data: pd.DataFrame):
             ),
             "percentage_change": st.column_config.NumberColumn(
                 "Variação (%)", format="%.2f%%"
-            ),
-            "number_index": st.column_config.NumberColumn(
-                "Número Índice", format="%.3f"
             ),
         },
     )

@@ -28,9 +28,10 @@ class Client:
     def list_assets(self) -> pd.DataFrame:
         response = requests.get(self._join(self._asset_url, "list"))
         response.raise_for_status()
-        return pd.DataFrame(
+        df = pd.DataFrame(
             response.json(), columns=["b3_code", "kind", "name", "description", "added"]
         )
+        return df.assign(added=df.added.map(date.fromisoformat))
 
     def create_asset(
         self,
@@ -85,7 +86,7 @@ class Client:
     def list_earnings(self) -> pd.DataFrame:
         response = requests.get(self._join(self._earning_url, "list"))
         response.raise_for_status()
-        return pd.DataFrame(
+        df = pd.DataFrame(
             response.json(),
             columns=[
                 "id",
@@ -96,6 +97,9 @@ class Client:
                 "ir_percentage",
                 "kind",
             ],
+        )
+        return df.assign(
+            **{k: df[k].map(date.fromisoformat) for k in ["hold_date", "payment_date"]}
         )
 
     def create_earning(
@@ -159,7 +163,7 @@ class Client:
     def list_transactions(self) -> pd.DataFrame:
         response = requests.get(self._join(self._transaction_url, "list"))
         response.raise_for_status()
-        return pd.DataFrame(
+        df = pd.DataFrame(
             response.json(),
             columns=[
                 "id",
@@ -170,6 +174,7 @@ class Client:
                 "shares",
             ],
         )
+        return df.assign(date=df["date"].map(date.fromisoformat))
 
     def create_transaction(
         self,
@@ -223,9 +228,10 @@ class Client:
     def list_economic(self) -> pd.DataFrame:
         response = requests.get(self._join(self._economic_url, "list"))
         response.raise_for_status()
-        return pd.DataFrame(
-            response.json(), columns=["index", "reference_date", "percent_change"]
+        df = pd.DataFrame(
+            response.json(), columns=["index", "reference_date", "percentage_change"]
         )
+        return df.assign(reference_date=df["reference_date"].map(date.fromisoformat))
 
     def economic_add(self, data: list[dict] | pd.DataFrame):
         if isinstance(data, pd.DataFrame):

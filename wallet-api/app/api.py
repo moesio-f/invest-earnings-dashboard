@@ -16,7 +16,6 @@ restricted.add_middleware(
 )
 
 app.include_router(v1.router, prefix="/v1")
-app.include_router(v1.router)
 
 
 @restricted.get("/healthcheck", include_in_schema=False)
