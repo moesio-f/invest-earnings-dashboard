@@ -1,10 +1,10 @@
 # Logging configuration
-from logging import config
+import logging
 
 LOGGING_CONFIG = {
     "version": 1,
     "formatters": {
-        "standard": {"format": "[%(module)s][%(levelname)s]: %(message)s"},
+        "standard": {"format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"},
     },
     "handlers": {
         "default": {
@@ -15,17 +15,18 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "app.wallet": {
+        "": {
             "handlers": ["default"],
-            "level": "DEBUG",
-            "propagate": True,
+            "level": "WARNING",
+            "propagate": False,
         },
-        "app.analytics": {
+        "app": {
             "handlers": ["default"],
             "level": "DEBUG",
             "propagate": True,
         },
     },
 }
-config.dictConfig(LOGGING_CONFIG)
-del config, LOGGING_CONFIG
+logging.config.dictConfig(LOGGING_CONFIG)
+
+del logging, LOGGING_CONFIG
