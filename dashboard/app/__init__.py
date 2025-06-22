@@ -1,10 +1,14 @@
 # Logging configuration
 import logging
 
+import streamlit
+
 LOGGING_CONFIG = {
     "version": 1,
     "formatters": {
-        "standard": {"format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"},
+        "standard": {
+            "format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"
+        },
     },
     "handlers": {
         "default": {
@@ -29,4 +33,7 @@ LOGGING_CONFIG = {
 }
 logging.config.dictConfig(LOGGING_CONFIG)
 
-del logging, LOGGING_CONFIG
+# Streamlit logs should propagate
+logging.getLogger("streamlit").propagate = True
+
+del logging, LOGGING_CONFIG, streamlit

@@ -1,38 +1,22 @@
+"""YoC vs Índices Econômicos."""
+
 from datetime import date
 
 import streamlit as st
-from app.config import DASHBOARD_CONFIG as config
-from app.dashboard.api import api
-from app.dashboard.components import charts, metrics
-from app.dashboard.state import Manager
+from app.analytics.components import charts, metrics
+from app.analytics.states.economic_index import EconomicIndexState
+from app.config import ST_CONFIG as config
 
-state = Manager.get_page_state("economic_index")
-today = date.today()
+# ===== Inicialização do estado da página =====
+state = EconomicIndexState()
+state.update_state()
 
-
-# === Inicializando estado de página ===
-def update_state():
-    # Is page initialized?
-    initialize = not state.get("initialized", False)
-
-    if initialize:
-        state.has_economic = len(api.economic_data()) > 0
-        cols = ["hold_date", "payment_date"]
-        earning_yield = api.earning_yield()
-        state.asset_codes = sorted(earning_yield.b3_code.unique().tolist())
-        state.min_date = earning_yield[cols].min(axis=None)
-        state.max_date = earning_yield[cols].max(axis=None)
-        state.initialized = True
-
-
-update_state()
-
-
+# =============================================
 # ==== Título ====
 st.title("Yield on Cost (YoC) vs Indicadores Econômicos")
 
 # Caso existam proventos, exibir
-if state.asset_codes and state.has_economic:
+if len(state.variables.earning_yield) > 0:
     cols = st.columns(4)
     date_col = cols[0].selectbox(
         "Agrupar por data de:",
@@ -41,7 +25,7 @@ if state.asset_codes and state.has_economic:
     )
     asset = cols[1].selectbox(
         "Ativo:",
-        ["Todos"] + state.asset_codes,
+        ["Todos"] + state.variables.asset_codes,
     )
     start_date = cols[2].date_input(
         "Data inicial:",
@@ -60,12 +44,27 @@ if state.asset_codes and state.has_economic:
 
     cumulative = st.toggle("Cumulativo", value=False)
     relative_bars = st.toggle("Valores relativos", value=False)
-    df = api.monthly_index_yoc(asset if asset != "Todos" else None, date_col)
-    df = df[
-        (df.group == asset)
-        & (df.reference_date >= start_date)
-        & (df.reference_date <= end_date)
-    ]
+
+    # Load DataFrame
+    df = state.variables.earning_yield.copy()
+    df["group"] = df.b3_code
+    df = df.drop(columns=["b3_code", "earning_kind"])
+
+    # Filter dates
+    df = df[(df.reference_date >= start_date) & (df.reference_date <= end_date)]
+
+    # Maybe target is group of assets?
+    if asset not in state.variables.asset_codes:
+        if asset == "Todos":
+            df["group"] = "Todos"
+        else:
+            df["group"] = df.asset_kind
+        df = df.drop(columns=["asset_kind"])
+
+    # Filter group/asset
+    df = df[(df.group == asset)]
+
+    # Show charts and metrics
     metrics.montly_index_yoc_metrics(df)
     charts.bar_yoc_variation(
         df,

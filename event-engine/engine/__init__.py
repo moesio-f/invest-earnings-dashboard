@@ -4,7 +4,9 @@ from logging import config
 LOGGING_CONFIG = {
     "version": 1,
     "formatters": {
-        "standard": {"format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"},
+        "standard": {
+            "format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"
+        },
     },
     "handlers": {
         "default": {
