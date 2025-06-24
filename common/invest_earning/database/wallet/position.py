@@ -53,6 +53,8 @@ class Position:
                     cte.c.total_buy / cte.c.buy,
                     (cte.c.buy - cte.c.sell) * (cte.c.total_buy / cte.c.buy),
                     cte.c.asset_kind,
-                ).all(),
+                )
+                .where(cte.c.buy - cte.c.sell != 0)
+                .all(),
             )
         )

@@ -54,7 +54,9 @@ class PositionsState(PageState):
 
             # Make all values point to end of month
             self.variables.history["month"] = (
-                pd.to_datetime(self.variables.history["month"]) + pd.offsets.MonthEnd(0)
+                pd.to_datetime(self.variables.history["month"])
+                + pd.offsets.MonthEnd(0)
+                - pd.offsets.MonthBegin(1)
             ).dt.date
 
         # Update state
