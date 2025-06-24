@@ -1,18 +1,25 @@
 # Whitelist file, start by ignoring everything
 *
 
-# Add scripts
-!scripts/**/*
-
-# Add requirements
-!requirements.txt
-
 # Add bootstrap data
 !data/*.parquet
 
-# Add Python files in app
-!app/**/*.py
+# Add common
+!common/**/*.py
+!common/pyproject.toml
+!common/migrations/alembic.ini
+!common/migrations/revisions/*.mako
+!common/scripts/*
+!common/tools/*
 
-# Add alembic configurations
-!app/*.ini
-!app/alembic/*.mako
+# Add wallet 
+!wallet-api/**/*.py
+!wallet-api/requirements.txt
+
+# Add event-engine
+!event-engine/**/*.py
+!event-engine/requirements.txt
+
+# Add dasboard
+!dashboard/**/*.py
+!dashboard/requirements.txt

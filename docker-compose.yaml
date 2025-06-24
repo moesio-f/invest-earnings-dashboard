@@ -1,15 +1,137 @@
 services:
-  app:
-    build: .
+  database:
+    image: postgres:latest
     environment:
-      DB_BACKEND: sqlite
-      DB_BACKUP_PATH: /code/backups
-      DB_BOOTSTRAP_DATA_PATH: /code/data/bootstrap/
-      CONNECTION_STRING: "sqlite:////code/database.db"
-      DASHBOARD_PORT: 8080
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_HOST_AUTH_METHOD: "trust"
     volumes:
-      - ./main.db:/code/database.db
-      - ./bak:/code/backups
-    restart: 'unless-stopped'
+      - ./config/pg-init.d:/docker-entrypoint-initdb.d
+      - ./data/postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready", "-p 5432"]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+      start_interval: 1s
+    shm_size: 128mb
+    restart: on-failure:1
+
+  broker:
+    image: rabbitmq:management
+    environment:
+      RABBITMQ_NODE_PORT: 5672
+      RABBITMQ_USE_LONGNAME: false
+    volumes:
+      - ./data/rabbitmq:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+      start_interval: 1s
+    restart: on-failure:1
+
+  migrations:
+    build:
+      dockerfile: ./migrations.Dockerfile
+    environment:
+      WALLET_DB_URL: "postgresql+psycopg://postgres@database/wallet"
+      ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      BOOTSTRAP_DATA_PATH: "/code/bootstrap"
+      BACKUP_DUMP_PATH: "/code/backup"
+    volumes:
+      - ./data:/code/bootstrap
+      - ./bak:/code/backup
+    depends_on:
+      database:
+        condition: service_healthy
+
+  wallet:
+    build:
+      dockerfile: ./wallet-api.Dockerfile
+    environment:
+      DB_URL: "postgresql+psycopg://postgres@database/wallet"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+    command: ["--port", "80"]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries", "1", "--spider", "http://0.0.0.0:80/restricted/healthcheck"]
+      interval: 1m
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+      start_interval: 1s
+    volumes:
+      - ./wallet.db:/code/wallet.db
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+      broker:
+        condition: service_healthy
+    restart: on-failure:3
     ports:
-      - 8082:8080
+      - "8083:80"
+
+  router:
+    build:
+      dockerfile: ./event-engine.Dockerfile
+      target: router
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+      YOC_QUEUE: "processor.yoc.queue"
+    depends_on:
+      broker:
+        condition: service_healthy
+    restart: on-failure:3
+
+  yoc:
+    build:
+      dockerfile: ./event-engine.Dockerfile
+      target: yoc-processor
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      YOC_QUEUE: "processor.yoc.queue"
+      WALLET_DB_URL: "postgresql+psycopg://postgres@database/wallet"
+      ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      TEMPERATURE: "0.3"
+    depends_on:
+      broker:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+    restart: on-failure:3
+
+  dashboard:
+    build:
+      dockerfile: ./dashboard.Dockerfile
+    environment:
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      WALLET_API_URL: "http://wallet:80/"
+      ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+    command: ["--server.port", "80"]
+    depends_on:
+      database:
+        condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
+      wallet:
+        condition: service_healthy
+      broker:
+        condition: service_healthy
+    restart: on-failure:3
+    ports:
+      - "8082:80"
+
+
+
+networks:
+  default:
+    name: invest-earnings-network
+    ipam:
+      config:
+        - subnet: 172.28.28.0/24

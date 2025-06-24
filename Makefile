@@ -1,22 +1,31 @@
-# Variáveis
-COMPOSE ?= ./docker-compose.dev.yaml
-
-# Recipe padrão
 all: down build up 
 
-
 down:
-	@docker compose -f ${COMPOSE} down
+	@docker compose down --remove-orphans
 
 build:
-	@docker compose -f ${COMPOSE} build
+	@docker compose build
 
 up:
-	@docker compose -f ${COMPOSE} up -d
+	@docker compose up -d --remove-orphans
 
 logs:
-	@docker compose -f ${COMPOSE} logs -f
+	@docker compose logs -f ${SERVICE}
 
-bash:
-	@docker compose -f ${COMPOSE} exec app bash
+sh:
+	@docker compose exec ${SERVICE} sh
 
+ps:
+	@docker compose ps
+
+stats:
+	@docker compose stats
+
+ips:
+	@docker network inspect -f '{{range .Containers}}{{println .Name .IPv4Address}}{{end}}' invest-earnings-network
+
+create-backup:
+	@docker compose run --rm migrations sh common/scripts/dump_backup.sh
+
+load-backup:
+	@docker compose run --rm migrations sh common/scripts/load_backup.sh
