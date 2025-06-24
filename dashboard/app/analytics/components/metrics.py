@@ -1,13 +1,17 @@
 """Métricas."""
 
+import logging
+
 import pandas as pd
 import streamlit as st
+
+logger = logging.getLogger(__name__)
 
 
 def earning_global_metrics(
     metrics: dict,
 ):
-
+    logger.debug("Received following metrics: %s", metrics.keys())
     for container, label, value, help in zip(
         [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
         [
@@ -21,13 +25,13 @@ def earning_global_metrics(
             "Yoc Médio (12M)",
         ],
         [
-            metrics.get("n_assets_with_earnings", 0),
-            f"R$ {metrics.get('collected_earnings', 0.0):.2f}",
-            f"R$ {metrics.get('to_collect_earnings', 0.0):.2f}",
-            f"{metrics.get('mean_yoc', 0.0):.2f}%",
+            metrics.get("n_assets_with_earnings"),
+            f"R$ {metrics.get('collected_earnings'):.2f}",
+            f"R$ {metrics.get('to_collect_earnings'):.2f}",
+            f"{metrics.get('mean_yoc'):.2f}%",
             *[
-                f"{getattr(metrics, f'mean_yoc_{k}', 0.0):.2f}%"
-                for k in ["current_month", "3m", "6m", "12m"]
+                f"{metrics.get(f'mean_yoc_{k}'):.2f}%"
+                for k in ["1m", "3m", "6m", "12m"]
             ],
         ],
         [

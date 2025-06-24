@@ -30,8 +30,6 @@ class HomeState(PageState):
         # Maybe update earning yield and others
         if initialize or today != self.variables.today:
             with db.get_session() as session:
-                # Get global metrics
-                self.variables.metrics = dict()
 
                 # Get earning yield for previous N months
                 self.variables.earning_yield = pd.DataFrame(
@@ -47,6 +45,25 @@ class HomeState(PageState):
                 self.variables.earning_yield[c] = self.variables.earning_yield[c].map(
                     lambda v: v.value
                 )
+
+            # Get global metrics
+            df = self.variables.earning_yield
+            self.variables.metrics = dict(
+                n_assets_with_earnings=df.b3_code.nunique(),
+                total_earnings=(total := df.total_earnings.sum()),
+                collected_earnings=(
+                    collected := df[df.payment_date <= today].total_earnings.sum()
+                ),
+                to_collect_earnings=total - collected,
+                mean_yoc=df.yoc.mean(),
+                **{
+                    f"mean_yoc_{n}m": self._last_months(
+                        df, "payment_date", n
+                    ).yoc.mean()
+                    for n in [1, 3, 6, 12]
+                },
+            )
+            del df
 
             # Get asset codes
             self.variables.asset_codes = sorted(
@@ -98,3 +115,15 @@ class HomeState(PageState):
 
         # Make today available
         self.variables.today = today
+
+    @staticmethod
+    def _last_months(df: pd.DataFrame, dt: str, n: int):
+        dt = pd.to_datetime(df[dt])
+
+        def _between(start, end):
+            return df[(dt >= start) & (dt <= end)]
+
+        today = pd.to_datetime(date.today())
+        start = today + pd.offsets.MonthBegin(-n)
+        end = today + pd.offsets.MonthEnd(0)
+        return _between(start, end)
