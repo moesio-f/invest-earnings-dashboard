@@ -8,7 +8,11 @@ config = YoCProcessorConfig()
 
 # Create processor
 processor = YoCProcessor(
-    config.yoc_queue, config.broker_url, config.wallet_db_url, config.analytic_db_url
+    config.yoc_queue,
+    config.broker_url,
+    config.wallet_db_url,
+    config.analytic_db_url,
+    config.temperature,
 )
 
 # Start processor

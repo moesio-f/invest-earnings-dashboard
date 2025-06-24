@@ -17,12 +17,12 @@ st.sidebar.markdown(f"> _Data do sistema: {date.today().strftime(config.DATE_FOR
 pg = st.navigation(
     [
         st.Page("analytics/pages/home.py", title="Home", icon=":material/home:"),
-        # st.Page(
-        #    "analytics/pages/economic_index.py",
-        #    title="Rentabilidade vs Indicadores",
-        #    icon=":material/monitoring:",
-        # ),
         st.Page("wallet/pages/positions.py", title="Posição", icon=":material/wallet:"),
+        st.Page(
+            "analytics/pages/economic_index.py",
+            title="Rentabilidade vs Indicadores",
+            icon=":material/monitoring:",
+        ),
         st.Page(
             "wallet/pages/settings.py",
             title="Configurações",

@@ -49,8 +49,8 @@ class EconomicIndexState(PageState):
                 self.variables.earning_yield.b3_code.unique().tolist()
             )
             cols = ["hold_date", "payment_date"]
-            self.variables.min_date = earning_yield[cols].min(axis=None)
-            self.variables.max_date = earning_yield[cols].max(axis=None)
+            self.variables.min_date = self.variables.earning_yield[cols].min(axis=None)
+            self.variables.max_date = self.variables.earning_yield[cols].max(axis=None)
 
             # Update others
             self.variables.initialized = True

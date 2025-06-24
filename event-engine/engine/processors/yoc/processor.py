@@ -29,7 +29,12 @@ logger = logging.getLogger(__name__)
 
 class YoCProcessor:
     def __init__(
-        self, queue: str, broker_url: str, wallet_db_url: str, analytic_db_url: str
+        self,
+        queue: str,
+        broker_url: str,
+        wallet_db_url: str,
+        analytic_db_url: str,
+        temperature: float,
     ):
         self._conn, self._ch = None, None
         self._wallet_engine = None
@@ -38,6 +43,14 @@ class YoCProcessor:
         self._queue = queue
         self._wallet_url = wallet_db_url
         self._analytic_url = analytic_db_url
+        self._t = temperature
+
+        if self._t > 0:
+            logger.info(
+                "Processor has positive temperature "
+                "(%.2f), updates might occur spontaneously.",
+                self._t,
+            )
 
     def run(self):
         try:
@@ -177,7 +190,7 @@ class YoCProcessor:
         n_earnings = self._earnings_count()
         n_yield = self._earning_yield_count()
         has_missing_yield = n_yield < n_earnings
-        should_random_update = random.random() > 0.7
+        should_random_update = random.random() > (1 - self._t)
 
         if has_missing_yield or should_random_update:
             earnings_ids = self._all_earnings_ids()

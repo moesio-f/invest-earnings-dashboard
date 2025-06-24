@@ -8,3 +8,4 @@ class YoCProcessorConfig(BaseSettings):
     broker_url: str = "amqp://guest:guest@localhost:5672/?heartbeat=30"
     wallet_db_url: str = "sqlite:///wallet.db"
     analytic_db_url: str = "sqlite:///analytic.db"
+    temperature: float = 0.25

@@ -16,4 +16,4 @@ RUN pip install --no-cache-dir ./common && \
 # Copy source code to container
 COPY ./dashboard/app app
 
-ENTRYPOINT ["python", "-m", "streamlit", "run", "app/entrypoint.py"]
+ENTRYPOINT ["python", "-m", "streamlit", "run", "app/entrypoint.py", "--browser.gatherUsageStats", "false"]

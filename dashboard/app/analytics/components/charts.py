@@ -73,15 +73,15 @@ def monthly_yoc(
 ):
     # Cumsum
     if cumulative:
-        df["yoc"] = df.groupby("group").yoc.cumsum()
+        df["yoc"] = df.groupby("b3_code").yoc.cumsum()
 
     # Show DataFrame with are chart
     fig = px.bar(
         df,
         x="reference_date",
         y="yoc",
-        color="group",
-        labels={"reference_date": "Mês", "yoc": "YoC Médio (%)", "group": "Grupo"},
+        color="b3_code",
+        labels={"reference_date": "Mês", "yoc": "YoC Médio (%)", "b3_code": "Ativo"},
         barmode="group",
     )
     fig.update_xaxes(
@@ -91,8 +91,8 @@ def monthly_yoc(
 
 
 def bar_yoc_variation(df: pd.DataFrame, cumulative: bool, relative: bool):
-    assert df.group.nunique() == 1
-    df = df.drop(columns="group")
+    assert df.b3_code.nunique() == 1
+    df = df.drop(columns="b3_code")
     cols = ["Yield on Cost (YoC)", "CDI", "CDB", "IPCA"]
     numeric_cols = list(set(df.columns) - set(["reference_date"]))
 

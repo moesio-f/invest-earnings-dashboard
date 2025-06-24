@@ -97,6 +97,7 @@ services:
       YOC_QUEUE: "processor.yoc.queue"
       WALLET_DB_URL: "postgresql+psycopg://postgres@database/wallet"
       ANALYTIC_DB_URL: "postgresql+psycopg://postgres@database/analytic"
+      TEMPERATURE: "0.3"
     depends_on:
       broker:
         condition: service_healthy
