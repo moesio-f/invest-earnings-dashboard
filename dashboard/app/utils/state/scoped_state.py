@@ -27,7 +27,7 @@ class ScopedState:
         return self[key] if key in self else default
 
     def keys(self) -> list[str]:
-        return list[st.session_state[self.scope]]
+        return list(st.session_state[self.scope])
 
     def items(self) -> list[tuple]:
         return list((k, self[k]) for k in self)

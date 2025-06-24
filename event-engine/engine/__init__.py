@@ -5,7 +5,7 @@ LOGGING_CONFIG = {
     "version": 1,
     "formatters": {
         "standard": {
-            "format": "%(asctime)s [%(module)s][%(funcName)s][%(levelname)s]: %(message)s"
+            "format": "%(asctime)s [%(name)s][%(funcName)s][%(levelname)s]: %(message)s"
         },
     },
     "handlers": {

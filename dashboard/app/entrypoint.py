@@ -5,6 +5,7 @@ com streamlit multi página.
 from datetime import date
 
 import streamlit as st
+from app import patches
 from app.config import ST_CONFIG as config
 from app.utils.state import Manager
 
@@ -33,6 +34,9 @@ pg = st.navigation(
 
 # Clear all pages
 Manager.clear_pages(destroy=True)
+
+# Apply patches
+patches.apply_streamlit_patches()
 
 # Run selected page
 pg.run()

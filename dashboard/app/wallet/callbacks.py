@@ -1,5 +1,6 @@
 """Callbacks para componentes do streamlit."""
 
+import logging
 from datetime import date
 from io import StringIO
 from typing import Callable
@@ -8,6 +9,8 @@ import pandas as pd
 from app.utils.state import Manager, ScopedState
 
 from .client import WalletApi
+
+logger = logging.getLogger(__name__)
 
 
 def create_asset(
@@ -119,7 +122,8 @@ def update_earning(
         callback()
 
 
-def economic_add(data: ScopedState, callback: Callable[[], None] = None):
+def add_economic(data: ScopedState, callback: Callable[[], None] = None):
+    logger.debug("Called with following data: %s", data.keys())
     if "bulk_data" in data:
         data = data.bulk_data
     else:
@@ -131,6 +135,7 @@ def economic_add(data: ScopedState, callback: Callable[[], None] = None):
             )
         ]
 
+    logger.debug("Adding following data: %s", data)
     WalletApi.economic_add(data)
 
     if callback:

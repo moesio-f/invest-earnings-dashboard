@@ -29,7 +29,7 @@ add_earning = functools.partial(
 )
 
 add_economic = functools.partial(
-    callbacks.economic_add,
+    callbacks.add_economic,
     callback=functools.partial(state.update_state, update_economic_data=True),
 )
 

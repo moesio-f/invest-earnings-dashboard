@@ -238,6 +238,10 @@ class Client:
         if isinstance(data, pd.DataFrame):
             data = data.to_dict(orient="records")
 
+        for d in data:
+            k = "reference_date"
+            d[k] = self._maybe_date_to_isoformat(d[k])
+
         try:
             requests.post(
                 self._join(self._economic_url, "add"), json=dict(data=data)
