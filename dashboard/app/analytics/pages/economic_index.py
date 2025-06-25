@@ -56,7 +56,18 @@ if len(state.variables.earning_yield) > 0:
     ).dt.date
 
     # Drop unused columns
-    df = df[["b3_code", "reference_date", "yoc", "cdi", "ipca"]]
+    df = df[
+        [
+            "b3_code",
+            "reference_date",
+            "yoc",
+            "cdi",
+            "ipca",
+            "avg_price",
+            "value_per_share",
+            "total_earnings",
+        ]
+    ]
 
     # Add CDB column
     df["cdb"] = 0.85 * df.cdi
@@ -72,7 +83,21 @@ if len(state.variables.earning_yield) > 0:
     df = df[df.b3_code == asset]
 
     # Apply aggregate function
-    df = df.groupby(["b3_code", "reference_date"]).mean().reset_index()
+    df = (
+        df.groupby(["b3_code", "reference_date"])
+        .agg(
+            {
+                "yoc": "mean",
+                "cdi": "mean",
+                "ipca": "mean",
+                "cdb": "mean",
+                "avg_price": "mean",
+                "value_per_share": "sum",
+                "total_earnings": "sum",
+            }
+        )
+        .reset_index()
+    )
 
     # Show charts and metrics
     metrics.montly_index_yoc_metrics(df)

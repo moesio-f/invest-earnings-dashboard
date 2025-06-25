@@ -50,7 +50,12 @@ def earning_global_metrics(
 
 def montly_index_yoc_metrics(df: pd.DataFrame):
     for container, label, value, help in zip(
-        [*st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1], *st.columns(4 + 2)[1:-1]],
+        [
+            *st.columns(4 + 2)[1:-1],
+            *st.columns(4 + 2)[1:-1],
+            *st.columns(4 + 2)[1:-1],
+            *st.columns(4 + 2)[1:-1],
+        ],
         [
             "Total de Meses",
             "Meses Acima do CDI",
@@ -64,6 +69,10 @@ def montly_index_yoc_metrics(df: pd.DataFrame):
             "Equivalência CDB",
             "Equivalência CDI+",
             "Equivalência IPCA+",
+            "Média do Preço Médio",
+            "Provento Médio por Unidade",
+            "Média de Proventos Totais",
+            "Total de Proventos",
         ],
         [
             len(df),
@@ -71,6 +80,10 @@ def montly_index_yoc_metrics(df: pd.DataFrame):
             *[f"{df[c].sum():.2f}%" for c in ["yoc", "cdi", "cdb", "ipca"]],
             *[f"{100 * df.yoc.mean() / df[c].mean():.2f}%" for c in ["cdi", "cdb"]],
             *[f"{12 * (df.yoc - df[c]).mean():.2f}%" for c in ["cdi", "ipca"]],
+            f"R$ {df.avg_price.mean():.2f}",
+            f"R$ {df.value_per_share.mean():.2f}",
+            f"R$ {df.total_earnings.mean():.2f}",
+            f"R$ {df.total_earnings.sum():.2f}",
         ],
         [
             "Quantidade de meses presentes na análise",
@@ -85,6 +98,10 @@ def montly_index_yoc_metrics(df: pd.DataFrame):
             "Taxa de rendimento para um CDB (15% IR).",
             "Taxa de rendimento equivalente para investimentos CDI + X% a.a.",
             "Taxa de rendimento equivalente para IPCA + X% a.a.",
+            "Média do preço médio pago no ativo durante a data de custódia.",
+            "Média dos proventos por unidade pagos por mês.",
+            "Média dos proventos total por mês.",
+            "Total de proventos.",
         ],
     ):
         container.metric(label, value, help=help)
