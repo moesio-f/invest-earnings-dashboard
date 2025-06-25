@@ -28,7 +28,7 @@ LOGGING_CONFIG = {
         "app": {
             "handlers": ["default"],
             "level": "DEBUG",
-            "propagate": True,
+            "propagate": False,
         },
     },
 }
