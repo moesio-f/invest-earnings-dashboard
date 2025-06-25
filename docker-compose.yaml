@@ -17,6 +17,8 @@ services:
       start_interval: 1s
     shm_size: 128mb
     restart: on-failure:1
+    ports:
+      - "5432:5432"
 
   broker:
     image: rabbitmq:management
