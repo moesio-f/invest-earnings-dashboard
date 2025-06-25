@@ -110,14 +110,19 @@ def create_earning(data: ScopedState, callback: Callable[[], None] = None):
 def update_earning(
     data: ScopedState, earning_id: int, callback: Callable[[], None] = None
 ):
+    logger.debug("Called for earning with id %d.", earning_id)
+    logger.debug(
+        "Called with following data: %s", {k: v.get() for k, v in data.items()}
+    )
     WalletApi.update_earning(
         earning_id=earning_id,
+        hold_date=data.hold_date(),
         payment_date=data.payment_date(),
         kind=data.kind(),
         value_per_share=data.value_per_share(),
         ir_percentage=data.ir_percentage(),
     )
-
+    logger.debug("Success update.")
     if callback:
         callback()
 

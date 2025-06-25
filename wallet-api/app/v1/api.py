@@ -182,7 +182,7 @@ def create_earning(
     return earning
 
 
-@earnings.post("/update/{earning_id}")
+@earnings.patch("/update/{earning_id}")
 def update_earning(
     earning_id: int,
     asset_b3_code: Annotated[str, EmbedBody()] = None,

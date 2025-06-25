@@ -130,6 +130,7 @@ class Client:
             logger.critical(
                 "%s:\n%s", e, json.dumps(data, indent=2, ensure_ascii=False)
             )
+            raise
         return response.json()["id"]
 
     def update_earning(
@@ -149,17 +150,25 @@ class Client:
             ).raise_for_status()
             return
 
-        requests.patch(
-            self._join(self._earning_url, "update", earning_id),
-            json=dict(
-                asset_b3_code=asset_b3_code,
-                hold_date=self._maybe_date_to_isoformat(hold_date),
-                payment_date=self._maybe_date_to_isoformat(payment_date),
-                value_per_share=value_per_share,
-                ir_percentage=ir_percentage,
-                kind=kind,
-            ),
-        ).raise_for_status()
+        data = dict(
+            asset_b3_code=asset_b3_code,
+            hold_date=self._maybe_date_to_isoformat(hold_date),
+            payment_date=self._maybe_date_to_isoformat(payment_date),
+            value_per_share=value_per_share,
+            ir_percentage=ir_percentage,
+            kind=kind,
+        )
+
+        try:
+            requests.patch(
+                self._join(self._earning_url, "update", earning_id),
+                json=data,
+            ).raise_for_status()
+        except Exception as e:
+            logger.critical(
+                "%s:\n%s", e, json.dumps(data, indent=2, ensure_ascii=False)
+            )
+            raise
 
     def list_transactions(self) -> pd.DataFrame:
         response = requests.get(self._join(self._transaction_url, "list"))
@@ -199,6 +208,7 @@ class Client:
             logger.critical(
                 "%s:\n%s", e, json.dumps(data, indent=2, ensure_ascii=False)
             )
+            raise
         return response.json()["id"]
 
     def update_transaction(
@@ -282,7 +292,7 @@ class Client:
 
     @staticmethod
     def _join(*v: str) -> str:
-        return "/".join(v_.rstrip("/") for v_ in v)
+        return "/".join(str(v_).rstrip("/") for v_ in v)
 
 
 # Default client
