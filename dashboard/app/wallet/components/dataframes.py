@@ -147,7 +147,15 @@ def economic_data_dataframe(economic_data: pd.DataFrame):
 def position_dataframe(position: pd.DataFrame):
     st.dataframe(
         position,
-        column_order=["b3_code", "asset_kind", "shares", "avg_price", "total_invested"],
+        column_order=[
+            "b3_code",
+            "asset_kind",
+            "shares",
+            "avg_price",
+            "total_invested",
+            "current_price",
+            "balance",
+        ],
         hide_index=True,
         column_config={
             "b3_code": st.column_config.TextColumn(
@@ -161,5 +169,9 @@ def position_dataframe(position: pd.DataFrame):
             "total_invested": st.column_config.NumberColumn(
                 "Total Investido", format="R$ %.2f"
             ),
+            "current_price": st.column_config.NumberColumn(
+                "Preço Atual", format="R$ %.2f"
+            ),
+            "balance": st.column_config.NumberColumn("Saldo", format="R$ %.2f"),
         },
     )
