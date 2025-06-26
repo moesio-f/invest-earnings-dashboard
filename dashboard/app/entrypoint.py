@@ -20,7 +20,7 @@ pg = st.navigation(
         st.Page("wallet/pages/positions.py", title="Posição", icon=":material/wallet:"),
         st.Page(
             "analytics/pages/economic_index.py",
-            title="Rentabilidade vs Indicadores",
+            title="YoC vs Indicadores",
             icon=":material/monitoring:",
         ),
         st.Page(
