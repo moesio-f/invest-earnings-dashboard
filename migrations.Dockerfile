@@ -10,7 +10,8 @@ WORKDIR /code
 COPY ./common common
 
 # Install dependencies
-RUN pip install --no-cache-dir ./common
+RUN pip install --no-cache-dir ./common && \
+    apk add --no-cache tzdata
 
 CMD ["./common/scripts/run_migrations.sh"]
 

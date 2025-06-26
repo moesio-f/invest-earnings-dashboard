@@ -12,7 +12,8 @@ COPY ./wallet-api/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir ./common && \
-    pip install --no-cache-dir -r requirements.txt
+    pip install --no-cache-dir -r requirements.txt && \
+    apk add --no-cache tzdata
 
 # Copy source code to container
 COPY ./wallet-api/app app
