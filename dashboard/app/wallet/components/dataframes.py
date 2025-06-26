@@ -145,15 +145,30 @@ def economic_data_dataframe(economic_data: pd.DataFrame):
 
 
 def position_dataframe(position: pd.DataFrame):
+    position = position.copy()
+    position["price_variation"] = (
+        100 * (position.current_price - position.avg_price) / position.avg_price
+    )
+
+    def format(styler):
+        styler.text_gradient(
+            cmap="RdYlGn",
+            subset=["price_variation"],
+            vmin=-0.001,
+            vmax=0.001,
+        )
+        return styler
+
     st.dataframe(
-        position,
+        position.style.pipe(format),
         column_order=[
             "b3_code",
             "asset_kind",
             "shares",
             "avg_price",
-            "total_invested",
             "current_price",
+            "price_variation",
+            "total_invested",
             "balance",
         ],
         hide_index=True,
@@ -173,5 +188,8 @@ def position_dataframe(position: pd.DataFrame):
                 "Preço Atual", format="R$ %.2f"
             ),
             "balance": st.column_config.NumberColumn("Saldo", format="R$ %.2f"),
+            "price_variation": st.column_config.NumberColumn(
+                "Variação (%)", format="%.2f%%"
+            ),
         },
     )

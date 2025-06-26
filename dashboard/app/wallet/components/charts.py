@@ -9,27 +9,33 @@ from app.wallet import colors
 
 
 def wealth_history(df: pd.DataFrame):
-    df = df.groupby("month").sum().reset_index(drop=False)[["month", "total_invested"]]
-    df = df.rename(columns=dict(month="Mês", total_invested="Patrimônio (R$)"))
+    df = (
+        df.groupby("month")
+        .sum()
+        .reset_index(drop=False)[["month", "total_invested", "balance"]]
+    )
+    df = df.rename(
+        columns=dict(
+            month="Mês", total_invested="Total Investido (R$)", balance="Saldo (R$)"
+        )
+    )
     fig = px.bar(
         df,
         x="Mês",
-        y="Patrimônio (R$)",
+        y=["Total Investido (R$)", "Saldo (R$)"],
+        barmode="group",
     )
+    fig.update_yaxes(title="Patrimônio (R$)")
     fig.update_xaxes(tickmode="array", tickvals=df["Mês"], tickformat="%b/%Y")
     st.plotly_chart(fig)
 
 
 def position_disitribution(df: pd.DataFrame):
-    df = (
-        df[["asset_kind", "total_invested"]].groupby(["asset_kind"]).sum().reset_index()
-    )
-    df = df.rename(
-        columns=dict(asset_kind="Tipo", total_invested="Total Investido (R$)")
-    )
+    df = df[["asset_kind", "balance"]].groupby(["asset_kind"]).sum().reset_index()
+    df = df.rename(columns=dict(asset_kind="Tipo", balance="Saldo (R$)"))
     fig = px.pie(
         df,
-        values="Total Investido (R$)",
+        values="Saldo (R$)",
         names="Tipo",
         color="Tipo",
         color_discrete_map=colors.AssetKindColors,

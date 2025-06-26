@@ -26,8 +26,8 @@ def earning_global_metrics(
         ],
         [
             metrics.get("n_assets_with_earnings"),
-            f"R$ {metrics.get('collected_earnings'):.2f}",
-            f"R$ {metrics.get('to_collect_earnings'):.2f}",
+            f"R$ {metrics.get('collected_earnings'):,.2f}",
+            f"R$ {metrics.get('to_collect_earnings'):,.2f}",
             f"{metrics.get('mean_yoc'):.2f}%",
             *[
                 f"{metrics.get(f'mean_yoc_{k}'):.2f}%"
@@ -80,10 +80,10 @@ def montly_index_yoc_metrics(df: pd.DataFrame):
             *[f"{df[c].sum():.2f}%" for c in ["yoc", "cdi", "cdb", "ipca"]],
             *[f"{100 * df.yoc.mean() / df[c].mean():.2f}%" for c in ["cdi", "cdb"]],
             *[f"{12 * (df.yoc - df[c]).mean():.2f}%" for c in ["cdi", "ipca"]],
-            f"R$ {df.avg_price.mean():.2f}",
-            f"R$ {df.value_per_share.mean():.2f}",
-            f"R$ {df.total_earnings.mean():.2f}",
-            f"R$ {df.total_earnings.sum():.2f}",
+            f"R$ {df.avg_price.mean():,.2f}",
+            f"R$ {df.value_per_share.mean():,.2f}",
+            f"R$ {df.total_earnings.mean():,.2f}",
+            f"R$ {df.total_earnings.sum():,.2f}",
         ],
         [
             "Quantidade de meses presentes na análise",

@@ -27,19 +27,22 @@ class Position:
             reference_date = date.max
 
         # Most recent prices
-        # Assumes that all assets have data
-        #   for max(reference_date)
         max_date = (
-            session.query(sa.sql.func.max(MarketPrice.reference_date))
+            session.query(
+                MarketPrice.asset_b3_code,
+                sa.sql.func.max(MarketPrice.reference_date).label("reference_date"),
+            )
             .where(MarketPrice.reference_date <= reference_date)
-            .scalar_subquery()
+            .group_by(MarketPrice.asset_b3_code)
+            .subquery()
         )
         most_recent_prices = (
             session.query(
                 MarketPrice.asset_b3_code.label("b3_code"),
                 MarketPrice.closing_price.label("closing_price"),
             )
-            .where(MarketPrice.reference_date == max_date)
+            .where(MarketPrice.asset_b3_code == max_date.c.asset_b3_code)
+            .where(MarketPrice.reference_date == max_date.c.reference_date)
             .subquery()
         )
 

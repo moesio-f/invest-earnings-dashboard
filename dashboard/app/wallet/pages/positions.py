@@ -2,7 +2,7 @@
 
 import streamlit as st
 from app.wallet import constants
-from app.wallet.components import charts, dataframes
+from app.wallet.components import charts, dataframes, metrics
 from app.wallet.states.positions import PositionsState
 
 # ===== Inicialização da página =====
@@ -27,6 +27,9 @@ with col_a:
 with col_b:
     charts.position_disitribution(state.variables.current_position)
 
+
+# === Métricas globais ===
+metrics.position_metrics(state.variables.history)
 
 # === Posição por classe de ativo ===
 for idx, kind in enumerate(constants.AssetKinds):
