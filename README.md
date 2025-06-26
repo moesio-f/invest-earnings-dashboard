@@ -69,6 +69,7 @@ flowchart TD
     wallet_api ---|Leitura & Escrita| wallet_db
     market_scrapper ---|Leitura & Escrita| wallet_db
     wallet_api -->|Notificação| router_channel
+    market_scrapper -->|Notificação| router_channel
     dashboard -->|Notificação| router_channel
     dashboard ---|Leitura| analytic_db
     processor ---|Leitura de Contexto| wallet_db
