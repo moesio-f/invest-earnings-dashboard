@@ -92,7 +92,7 @@ def extract_strategy_2(
         url = m.group("data_url")
 
         # Query for maximum allowed
-        url = re.sub(r"/(?P<id>[0-9]+)/(?P<size>[0-9]+)/", "/\g<id>/3650/")
+        url = re.sub(r"/(?P<id>[0-9]+)/(?P<size>[0-9]+)/", "/\g<id>/3650/", url)
 
         response = requests.get(url, headers={"User-Agent": UserAgent().random})
         response.raise_for_status()
