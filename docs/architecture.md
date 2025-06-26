@@ -13,11 +13,13 @@ Esse documento contém a arquitetura utilizada pela aplicação.
         - Permitir o cadastro de transações envolvendo os ativos;
         - Permitir o cadastro de proventos distribuídos por ativos;
         - Permitir o cadastro de índices econômicos a nível mensal;
+        - (jun/25) Coleta automática de dados de mercado dos ativos;
     - _Visualização_
         - Cálculo de métricas relacionadas com YoC (Yield on Cost);
         - Cálculo de rendimentos _versus_ índices econômicos (e.g., CDI, IPCA);
         - Quantidade total de proventos recebidos e a receber;
         - Análise por classe de ativo (e.g., Ação, ETF, FII, BDR);
+        - (jun/25) Visualização da posição de investimentos;
 - **Contexto Adicional**:
     - É possível que a aplicação possua dados relativos à um grande período de tempo;
     - A visualização deve ser atualizada sempre que os dados atualizarem;

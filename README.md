@@ -18,6 +18,7 @@ Uma descrição geral da arquitetura se encontra em [`docs`](docs/architecture.m
 - [`common`](./common): biblioteca utilitária com definições padrões compartilhadas pelos diferentes componentes do sistema;
 - [`wallet-api`](./wallet-api): API RESTFul para gerenciamento de uma carteira de investimentos e dados econômicos;
 - [`event-engine`](./event-engine): motor de eventos, reage a diferentes notificações emitidas pelo sistema e gera análises;
+- [`dashboard`](./dashboard): interface gráfica para
 
 ## Quickstart
 
@@ -25,10 +26,52 @@ Para acessar o dashboard localmente, basta executar o comando `make` ou executar
 
 Para configurações dos diferentes componentes, checar seus respectivos diretórios.
 
-### Adicionando Ativos, Proventos e Dados Ecônomicos
+### Adicionando Ativos, Proventos e Dados Econômicos
 
 ![](.github/dashboard_settings.png)
 
 O dashboard possui uma seção simplificada de cadastro de ativos e proventos, incluindo adição a partir de arquivos CSV. Todavia, o dashboard e a API ainda não oferecem suporte nativo para remoção/deleção de items, sendo necessário se comunicar diretamente com o banco de dados.
 
+## Arquitetura
+
+O diagrama abaixo contém uma visão geral da arquitetura do sistema, que consiste em uma arquitetura híbrida baseada em eventos. Para mais informações, checar a [documentação](./docs/architecture.md).
+
+```mermaid
+---
+title: Visão Geral da Arquitetura
+---
+flowchart TD
+    subgraph "Banco(s) de Dados"
+        wallet_db[("<p>Schema</p>wallet")]
+        analytic_db[("<p>Schema</p>analytic")]
+        logging_db@{shape: lin-cyl, label: "Logging"}
+    end
+    wallet_api[Gerenciador de Carteira]
+
+    subgraph Interface Gráfica
+        dashboard[Dashboard]
+        settings_ui[Configurações da Carteira]
+    end
+
+    subgraph Motor de Eventos
+        router_channel@{shape: das, label: "Canal de Roteamento"}
+        processor_channel@{shape: das, label: "Canal de Processamento"}
+        router[Router]
+        processor@{shape: procs, label: "Analytic Processor"}
+
+        router_channel -->|Mensagem| router
+        router -->|Seleção de Fila| processor_channel
+        processor_channel --> processor
+    end
+
+    settings_ui -->|Consome| wallet_api
+    wallet_api ---|Leitura & Escrita| wallet_db
+    wallet_api -->|Notificação| router_channel
+    dashboard -->|Notificação| router_channel
+    dashboard ---|Leitura| analytic_db
+    processor ---|Leitura de Contexto| wallet_db
+    processor ---|Logs| logging_db
+    processor ---|Leitura de Estado| analytic_db
+    processor ---|Escrita de Estado| analytic_db
+```
 
