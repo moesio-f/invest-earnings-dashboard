@@ -29,3 +29,6 @@ create-backup:
 
 load-backup:
 	@docker compose run --rm migrations sh common/scripts/load_backup.sh
+
+run-scrapper:
+	@docker compose run --rm scrappers python -m scrappers.market_price

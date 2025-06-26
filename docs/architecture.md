@@ -13,11 +13,13 @@ Esse documento contém a arquitetura utilizada pela aplicação.
         - Permitir o cadastro de transações envolvendo os ativos;
         - Permitir o cadastro de proventos distribuídos por ativos;
         - Permitir o cadastro de índices econômicos a nível mensal;
+        - (jun/25) Coleta automática de dados de mercado dos ativos;
     - _Visualização_
         - Cálculo de métricas relacionadas com YoC (Yield on Cost);
         - Cálculo de rendimentos _versus_ índices econômicos (e.g., CDI, IPCA);
         - Quantidade total de proventos recebidos e a receber;
         - Análise por classe de ativo (e.g., Ação, ETF, FII, BDR);
+        - (jun/25) Visualização da posição de investimentos;
 - **Contexto Adicional**:
     - É possível que a aplicação possua dados relativos à um grande período de tempo;
     - A visualização deve ser atualizada sempre que os dados atualizarem;
@@ -63,6 +65,9 @@ O diagrama abaixo contém uma visão geral das decisões tomadas. Em especial, c
     - Processadores são livres para reagir a qualquer evento desse canal;
     - Processadores não devem possuir conhecimento de outros processadores ou componentes do sistema;
     - Processadores devem enviar seus _logs_ para o componente de _logging_;
+- (jun/25) Scrapper de dados de mercado é um componente a parte com execução agendada;
+    - Esse componente poderia ser parte do motor de eventos, todavia ele é um processo que não se preocupa com eventos específicos (i.e., é um ETL agendado);
+    - 
   
 ```mermaid
 ---
@@ -75,6 +80,7 @@ flowchart TD
         logging_db@{shape: lin-cyl, label: "Logging"}
     end
     wallet_api[Gerenciador de Carteira]
+    market_scrapper[Scrapper de dados do Mercado]
 
     subgraph Interface Gráfica
         dashboard[Dashboard]
@@ -94,7 +100,9 @@ flowchart TD
 
     settings_ui -->|Consome| wallet_api
     wallet_api ---|Leitura & Escrita| wallet_db
+    market_scrapper ---|Leitura & Escrita| wallet_db
     wallet_api -->|Notificação| router_channel
+    market_scrapper -->|Notificação| router_channel
     dashboard -->|Notificação| router_channel
     dashboard ---|Leitura| analytic_db
     processor ---|Leitura de Contexto| wallet_db

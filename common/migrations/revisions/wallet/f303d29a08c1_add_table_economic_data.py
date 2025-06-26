@@ -1,5 +1,11 @@
 """Add table economic_data
 
+!!WARNING!! This migration contains
+no information due to a mistake. In
+order to remove it, the current databases
+would have to be manually updated on the
+alembic-related tables.
+
 Revision ID: f303d29a08c1
 Revises: 62d263ca3271
 Create Date: 2025-05-09 11:31:10.143235

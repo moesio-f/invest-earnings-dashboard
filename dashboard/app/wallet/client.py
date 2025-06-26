@@ -281,7 +281,15 @@ class Client:
         response.raise_for_status()
         return pd.DataFrame(
             response.json(),
-            columns=["b3_code", "shares", "avg_price", "total_invested", "asset_kind"],
+            columns=[
+                "b3_code",
+                "shares",
+                "avg_price",
+                "total_invested",
+                "asset_kind",
+                "current_price",
+                "balance",
+            ],
         )
 
     @staticmethod
