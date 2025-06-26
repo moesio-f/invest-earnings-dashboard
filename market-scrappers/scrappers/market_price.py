@@ -101,12 +101,23 @@ def extract_strategy_2(
     return []
 
 
-def extract_data(b3_code: str, kind: AssetKind, start_date: date, end_date: date):
+def extract_data(
+    b3_code: str,
+    kind: AssetKind,
+    start_date: date,
+    end_date: date,
+    initial_strategy: int = 1,
+):
+    # Select initial strategy
+    fst, snd = extract_strategy_1, extract_strategy_2
+    if initial_strategy == 2:
+        fst, snd = extract_strategy_2, extract_strategy_1
+
     # Try with strategies
-    data = extract_strategy_1(b3_code, kind, start_date, end_date)
+    data = fst(b3_code, kind, start_date, end_date)
     if len(data) <= 0:
         logger.debug("Strategy one failed, trying with strategy 2.")
-        data = extract_strategy_2(b3_code, kind, start_date, end_date)
+        data = snd(b3_code, kind, start_date, end_date)
 
     # If data available, persist
     if len(data) > 0:
@@ -156,7 +167,13 @@ def main():
 
             try:
                 # Run extraction
-                extract_data(b3_code, kind, min_date, max_date)
+                extract_data(
+                    b3_code,
+                    kind,
+                    min_date,
+                    max_date,
+                    initial_strategy=random.randint(1, 2),
+                )
 
                 # Notify successful extraction
                 Dispatcher.notify_extraction(b3_code, min_date, max_date)
