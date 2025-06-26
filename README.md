@@ -18,7 +18,7 @@ Uma descrição geral da arquitetura se encontra em [`docs`](docs/architecture.m
 - [`common`](./common): biblioteca utilitária com definições padrões compartilhadas pelos diferentes componentes do sistema;
 - [`wallet-api`](./wallet-api): API RESTFul para gerenciamento de uma carteira de investimentos e dados econômicos;
 - [`event-engine`](./event-engine): motor de eventos, reage a diferentes notificações emitidas pelo sistema e gera análises;
-- [`dashboard`](./dashboard): interface gráfica para
+- [`dashboard`](./dashboard): interface gráfica para o dashboard e gerenciamento de carteira;
 
 ## Quickstart
 
