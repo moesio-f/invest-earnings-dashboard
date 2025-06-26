@@ -88,11 +88,20 @@ def extract_strategy_2(
     # Find target url in page
     m = re.search(r"quotations: '(?P<data_url>.+)',", response.text)
     if m is not None:
-        response = requests.get(
-            m.group("data_url"), headers={"User-Agent": UserAgent().random}
-        )
+        # Get base url
+        url = m.group("data_url")
+
+        # Query for maximum allowed
+        url = re.sub(r"/(?P<id>[0-9]+)/(?P<size>[0-9]+)/", "/\g<id>/3650/")
+
+        response = requests.get(url, headers={"User-Agent": UserAgent().random})
         response.raise_for_status()
         data = response.json()
+
+        # Some returns are dict
+        if isinstance(data, dict):
+            data = data["real"]
+
         for d in data:
             d["date"] = datetime.strptime(d["created_at"], "%d/%m/%Y").date()
             del d["created_at"]
@@ -179,7 +188,7 @@ def main():
                 Dispatcher.notify_extraction(b3_code, min_date, max_date)
             except Exception as e:
                 logger.exception(
-                    "Extraction failed for asset %s (%s-%s): %s",
+                    "Extraction failed for asset %s (%s to %s): %s",
                     b3_code,
                     min_date.isoformat(),
                     max_date.isoformat(),
