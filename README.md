@@ -47,6 +47,7 @@ flowchart TD
         logging_db@{shape: lin-cyl, label: "Logging"}
     end
     wallet_api[Gerenciador de Carteira]
+    market_scrapper[Scrapper de dados do Mercado]
 
     subgraph Interface Gráfica
         dashboard[Dashboard]
@@ -66,6 +67,7 @@ flowchart TD
 
     settings_ui -->|Consome| wallet_api
     wallet_api ---|Leitura & Escrita| wallet_db
+    market_scrapper ---|Leitura & Escrita| wallet_db
     wallet_api -->|Notificação| router_channel
     dashboard -->|Notificação| router_channel
     dashboard ---|Leitura| analytic_db
@@ -74,4 +76,3 @@ flowchart TD
     processor ---|Leitura de Estado| analytic_db
     processor ---|Escrita de Estado| analytic_db
 ```
-

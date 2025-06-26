@@ -65,6 +65,9 @@ O diagrama abaixo contém uma visão geral das decisões tomadas. Em especial, c
     - Processadores são livres para reagir a qualquer evento desse canal;
     - Processadores não devem possuir conhecimento de outros processadores ou componentes do sistema;
     - Processadores devem enviar seus _logs_ para o componente de _logging_;
+- (jun/25) Scrapper de dados de mercado é um componente a parte com execução agendada;
+    - Esse componente poderia ser parte do motor de eventos, todavia ele é um processo que não se preocupa com eventos específicos (i.e., é um ETL agendado);
+    - 
   
 ```mermaid
 ---
@@ -77,6 +80,7 @@ flowchart TD
         logging_db@{shape: lin-cyl, label: "Logging"}
     end
     wallet_api[Gerenciador de Carteira]
+    market_scrapper[Scrapper de dados do Mercado]
 
     subgraph Interface Gráfica
         dashboard[Dashboard]
@@ -96,6 +100,7 @@ flowchart TD
 
     settings_ui -->|Consome| wallet_api
     wallet_api ---|Leitura & Escrita| wallet_db
+    market_scrapper ---|Leitura & Escrita| wallet_db
     wallet_api -->|Notificação| router_channel
     dashboard -->|Notificação| router_channel
     dashboard ---|Leitura| analytic_db
