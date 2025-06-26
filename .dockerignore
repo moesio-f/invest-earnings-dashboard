@@ -20,6 +20,11 @@
 !event-engine/**/*.py
 !event-engine/requirements.txt
 
-# Add dasboard
+# Add dashboard
 !dashboard/**/*.py
 !dashboard/requirements.txt
+
+# Add scrappers
+!market-scrappers/**/*.py
+!market-scrappers/requirements.txt
+!market-scrappers/scripts/*

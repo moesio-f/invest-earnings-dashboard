@@ -51,6 +51,20 @@ services:
       database:
         condition: service_healthy
 
+  scrappers:
+    build:
+      dockerfile: ./market-scrappers.Dockerfile
+    environment:
+      DB_URL: "postgresql+psycopg://postgres@database/wallet"
+      NOTIFICATION_QUEUE: "notification.router.queue"
+      BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+    volumes:
+      - ./data:/code/bootstrap
+      - ./bak:/code/backup
+    depends_on:
+      migrations:
+        condition: service_completed_successfully
+
   wallet:
     build:
       dockerfile: ./wallet-api.Dockerfile
@@ -58,6 +72,7 @@ services:
       DB_URL: "postgresql+psycopg://postgres@database/wallet"
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      PREVIOUS_DAYS: 30
     command: ["--port", "80"]
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries", "1", "--spider", "http://0.0.0.0:80/restricted/healthcheck"]
