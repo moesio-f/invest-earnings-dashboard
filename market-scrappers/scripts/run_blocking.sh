@@ -12,5 +12,5 @@ do
     python -m scrappers.market_price
 
     # Sleep for specified time
-    sleep ${SLEEP_INTERVAL:-1d}
+    sleep ${SLEEP_INTERVAL:-0.5d}
 done

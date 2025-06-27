@@ -153,8 +153,8 @@ def main():
     # Get data for previous days required by the user
     start_date = today - timedelta(days=MarketPriceConfig().previous_days)
 
-    # Scrape up to yesterday (i.e., no closing price for today yet)
-    end_date = today - timedelta(days=1)
+    # Scrape up to today (partial price might be available)
+    end_date = today
 
     # Obtain list of assets in random order
     codes = asset_codes()
