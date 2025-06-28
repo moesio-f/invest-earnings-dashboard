@@ -5,7 +5,7 @@ from datetime import date
 
 import sqlalchemy as sa
 
-from .asset import Asset, AssetKind, Transaction, TransactionKind
+from .asset import Asset, AssetKind, Transaction, TransactionKind, Earning
 from .market_price import MarketPrice
 
 
@@ -18,6 +18,10 @@ class Position:
     asset_kind: AssetKind
     current_price: float
     balance: float
+    total_earnings: float
+    total_ir_adjusted_earnings: float
+    yield_on_cost: float
+    rate_of_return: float
 
     @classmethod
     def get(
@@ -46,6 +50,20 @@ class Position:
             .subquery()
         )
 
+        # Total earnings paid per share up to reference_date
+        total_earnings_per_share = (
+            session.query(
+                Earning.asset_b3_code.label("b3_code"),
+                sa.sql.func.sum(
+                    Earning.value_per_share * (1 - (Earning.ir_percentage / 100))
+                ).label("total_ir_adjusted_earnings"),
+                sa.sql.func.sum(Earning.value_per_share).label("total_earnings"),
+            )
+            .where(Earning.payment_date <= reference_date)
+            .group_by(Earning.asset_b3_code)
+            .subquery()
+        )
+
         # Aggregate transactions and market prices
         is_buy = sa.sql.func.cast(Transaction.kind == TransactionKind.buy, sa.INTEGER)
         is_sell = 1 - is_buy
@@ -69,23 +87,41 @@ class Position:
             .cte()
         )
 
+        # Utility operations
+        shares = cte.c.buy - cte.c.sell
+        avg_price = cte.c.total_buy / cte.c.buy
+        total_invested = shares * avg_price
+        current_price = sa.sql.func.coalesce(
+            most_recent_prices.c.closing_price,
+            avg_price,
+        )
+        balance = shares * current_price
+        total_earnings = shares * total_earnings_per_share.c.total_earnings
+        total_ir_adjusted_earnings = (
+            shares * total_earnings_per_share.c.total_ir_adjusted_earnings
+        )
+
         return list(
             map(
                 lambda v: Position(**{k.name: v for k, v in zip(fields(cls), v)}),
                 session.query(
                     cte.c.b3_code,
-                    cte.c.buy - cte.c.sell,
-                    cte.c.total_buy / cte.c.buy,
-                    (cte.c.buy - cte.c.sell) * (cte.c.total_buy / cte.c.buy),
+                    shares,
+                    avg_price,
+                    total_invested,
                     cte.c.asset_kind,
-                    sa.sql.func.coalesce(
-                        most_recent_prices.c.closing_price,
-                        cte.c.total_buy / cte.c.buy,
-                    ),
-                    sa.sql.func.coalesce(
-                        (cte.c.buy - cte.c.sell) * most_recent_prices.c.closing_price,
-                        (cte.c.buy - cte.c.sell) * (cte.c.total_buy / cte.c.buy),
-                    ),
+                    current_price,
+                    balance,
+                    total_earnings,
+                    total_ir_adjusted_earnings,
+                    100 * total_ir_adjusted_earnings / total_invested,
+                    100
+                    * ((total_ir_adjusted_earnings + balance) - total_invested)
+                    / total_invested,
+                )
+                .join(
+                    total_earnings_per_share,
+                    total_earnings_per_share.c.b3_code == cte.c.b3_code,
                 )
                 .outerjoin(
                     most_recent_prices,

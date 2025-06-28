@@ -153,7 +153,7 @@ def position_dataframe(position: pd.DataFrame):
     def format(styler):
         styler.text_gradient(
             cmap="RdYlGn",
-            subset=["price_variation"],
+            subset=["price_variation", "yield_on_cost", "rate_of_return"],
             vmin=-0.001,
             vmax=0.001,
         )
@@ -168,8 +168,11 @@ def position_dataframe(position: pd.DataFrame):
             "avg_price",
             "current_price",
             "price_variation",
+            "yield_on_cost",
+            "rate_of_return",
             "total_invested",
             "balance",
+            "total_ir_adjusted_earnings",
         ],
         hide_index=True,
         column_config={
@@ -178,9 +181,7 @@ def position_dataframe(position: pd.DataFrame):
             ),
             "asset_kind": st.column_config.TextColumn("Classe do Ativo"),
             "shares": st.column_config.NumberColumn("Quantidade", format="%d"),
-            "avg_price": st.column_config.NumberColumn(
-                "Preço Médio (R$)", format="R$ %.2f"
-            ),
+            "avg_price": st.column_config.NumberColumn("Preço Médio", format="R$ %.2f"),
             "total_invested": st.column_config.NumberColumn(
                 "Total Investido", format="R$ %.2f"
             ),
@@ -189,7 +190,16 @@ def position_dataframe(position: pd.DataFrame):
             ),
             "balance": st.column_config.NumberColumn("Saldo", format="R$ %.2f"),
             "price_variation": st.column_config.NumberColumn(
-                "Variação (%)", format="%.2f%%"
+                "Variação", format="%.2f%%"
+            ),
+            "yield_on_cost": st.column_config.NumberColumn(
+                "Yield on Cost", format="%.2f%%"
+            ),
+            "rate_of_return": st.column_config.NumberColumn(
+                "Rentabilidade", format="%.2f%%"
+            ),
+            "total_ir_adjusted_earnings": st.column_config.NumberColumn(
+                "Total de Proventos", format="R$ %.2f"
             ),
         },
     )

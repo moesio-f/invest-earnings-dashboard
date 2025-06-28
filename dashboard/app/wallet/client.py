@@ -289,6 +289,10 @@ class Client:
                 "asset_kind",
                 "current_price",
                 "balance",
+                "total_earnings",
+                "total_ir_adjusted_earnings",
+                "yield_on_cost",
+                "rate_of_return",
             ],
         )
 
