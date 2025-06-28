@@ -145,7 +145,7 @@ def economic_data_dataframe(economic_data: pd.DataFrame):
 
 
 def position_dataframe(position: pd.DataFrame):
-    position = position.copy()
+    position = position[position.shares != 0].copy()
     position["price_variation"] = (
         100 * (position.current_price - position.avg_price) / position.avg_price
     )
