@@ -25,6 +25,6 @@
 !dashboard/requirements.txt
 
 # Add scrappers
-!market-scrappers/**/*.py
-!market-scrappers/requirements.txt
-!market-scrappers/scripts/*
+!market-scrapers/**/*.py
+!market-scrapers/requirements.txt
+!market-scrapers/scripts/*

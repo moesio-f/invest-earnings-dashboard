@@ -30,5 +30,5 @@ create-backup:
 load-backup:
 	@docker compose run --rm migrations sh common/scripts/load_backup.sh
 
-run-scrapper:
-	@docker compose run --env PREVIOUS_DAYS=1825 --rm scrappers python -m scrappers.market_price
+run-scraper:
+	@docker compose run --env PREVIOUS_DAYS=1825 --rm scrapers python -m scrapers.market_price

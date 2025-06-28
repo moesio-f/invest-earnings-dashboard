@@ -10,7 +10,7 @@ WORKDIR /code
 
 COPY ./common/invest_earning common/invest_earning
 COPY ./common/pyproject.toml common/pyproject.toml
-COPY ./market-scrappers/requirements.txt .
+COPY ./market-scrapers/requirements.txt .
 
 # Install dependencies
 RUN pip install --no-cache-dir ./common && \
@@ -18,6 +18,6 @@ RUN pip install --no-cache-dir ./common && \
     apk add --no-cache tzdata
 
 # Copy source code to container
-COPY ./market-scrappers app
+COPY ./market-scrapers app
 
 CMD ["./app/scripts/run_blocking.sh"]

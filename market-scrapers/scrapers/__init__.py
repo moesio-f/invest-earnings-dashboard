@@ -17,7 +17,7 @@ LOGGING_CONFIG = {
         },
     },
     "loggers": {
-        "scrappers": {
+        "scrapers": {
             "handlers": ["default"],
             "level": "DEBUG",
             "propagate": False,

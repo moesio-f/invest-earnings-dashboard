@@ -55,9 +55,9 @@ services:
       database:
         condition: service_healthy
 
-  scrappers:
+  scrapers:
     build:
-      dockerfile: ./market-scrappers.Dockerfile
+      dockerfile: ./market-scrapers.Dockerfile
     environment:
       DB_URL: "postgresql+psycopg://postgres@database/wallet"
       NOTIFICATION_QUEUE: "notification.router.queue"

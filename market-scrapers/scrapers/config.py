@@ -1,4 +1,4 @@
-"""Configurações gerais dos scrapper."""
+"""Configurações gerais dos scrapers."""
 
 from pydantic_settings import BaseSettings
 

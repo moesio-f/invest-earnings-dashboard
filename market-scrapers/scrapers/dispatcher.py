@@ -27,7 +27,7 @@ class _NotificationDispatcher:
     def notify_extraction(self, b3_code: str, start_date: date, end_date: date):
         # Format notification message
         msg = (
-            "[market-scrapper] SCRAPPED PRICES FOR asset "
+            "[market-scraper] SCRAPPED PRICES FOR asset "
             f"WITH ID {b3_code} BETWEEN {start_date.isoformat()} "
             f"AND {end_date.isoformat()}"
         )

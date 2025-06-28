@@ -4,11 +4,11 @@ Esse diretório contém scripts para extração de dados de mercado. É responsa
 
 ## Organização
 
-O código fonte é disponibilizado em [`scrapper`](./scrappers).
+O código fonte é disponibilizado em [`scraper`](./scrapers).
 
 ## Variáveis de Ambiente
 
-A tabela abaixa representa as configurações gerais necessárias por todos os scrappers.
+A tabela abaixa representa as configurações gerais necessárias por todos os scrapers.
 
 | Variável | Descrição |
 | --- | --- |
@@ -20,4 +20,4 @@ A tabela abaixa representa as configurações gerais necessárias por todos os s
 
 | Variável | Scrapper | Descrição |
 | --- | --- | --- |
-| `PREVIOUS_DAYS` | [`market_price`](./scrappers/market_price.py) | Quantidade de dias anteriores ao atual para tentar extrair (default=30). |
+| `PREVIOUS_DAYS` | [`market_price`](./scrapers/market_price.py) | Quantidade de dias anteriores ao atual para tentar extrair (default=30). |
