@@ -7,7 +7,7 @@ import logging
 import re
 
 import pika
-from engine.utils.messages import AnalyticEvent
+from engine.utils.messages import AnalyticEvent, AnalyticTrigger
 from pydantic import ValidationError
 
 logger = logging.getLogger(__name__)
@@ -31,6 +31,9 @@ class Router:
         )
         self._dashboard_pattern = re.compile(
             r"QUERIED (?P<kind>ASSET|GROUP) (?P<entity>\w+) ON (?P<table>\w+)",
+        )
+        self._price_pattern = re.compile(
+            r"SCRAPPED PRICES FOR asset WITH ID (?P<asset_id>\w+) BETWEEN (?P<start_date>.+) AND (?P<end_date>.+)"
         )
 
     def run(self):
@@ -111,13 +114,17 @@ class Router:
         data = dict(query_information=dict(), update_information=dict())
         match, key = None, ""
         if source == "wallet-api":
-            data["trigger"] = "wallet_update"
+            data["trigger"] = AnalyticTrigger.wallet_update
             match = self._wallet_pattern.match(message)
             key = "update_information"
         elif source == "dashboard":
-            data["trigger"] = "dashboard_query"
+            data["trigger"] = AnalyticTrigger.dashboard_query
             match = self._dashboard_pattern.match(message)
             key = "query_information"
+        elif source == "market-scraper":
+            data["trigger"] = AnalyticTrigger.price_scraper
+            match = self._price_pattern.match(message)
+            key = "price_scraper_information"
 
         # If matched, add to data
         if match:

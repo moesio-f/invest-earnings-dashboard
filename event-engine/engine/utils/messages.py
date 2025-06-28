@@ -1,5 +1,7 @@
 """Modelos de mensagens."""
 
+from datetime import date
+
 from invest_earning.database.utils import StrEnum
 from pydantic import BaseModel, ConfigDict, model_validator
 
@@ -11,6 +13,7 @@ class Empty(BaseModel):
 class AnalyticTrigger(StrEnum):
     wallet_update = "wallet_update"
     dashboard_query = "dashboard_query"
+    price_scraper = "price_scraper"
 
 
 class WalletEntity(StrEnum):
@@ -50,10 +53,17 @@ class QueryInformation(BaseModel):
     table: AnalyticTable
 
 
+class PriceScraperInformation(BaseModel):
+    asset_id: str
+    start_date: date
+    end_date: date
+
+
 class AnalyticEvent(BaseModel):
     trigger: AnalyticTrigger
-    update_information: WalletUpdateInformation | Empty
-    query_information: QueryInformation | Empty
+    update_information: WalletUpdateInformation | Empty = dict()
+    query_information: QueryInformation | Empty = dict()
+    price_scraper_information: PriceScraperInformation | Empty = dict()
 
     @model_validator(mode="after")
     def check_consistencty(self) -> "AnalyticEvent":
@@ -62,5 +72,8 @@ class AnalyticEvent(BaseModel):
 
         if self.trigger == AnalyticTrigger.dashboard_query:
             assert not isinstance(self.query_information, Empty)
+
+        if self.trigger == AnalyticTrigger.price_scraper:
+            assert not isinstance(self.price_scraper_information, Empty)
 
         return self
