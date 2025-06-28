@@ -10,9 +10,7 @@ logger = logging.getLogger(__name__)
 
 def position_metrics(history: pd.DataFrame):
     # Find two most recent dates
-    most_recent_dates = history.month.unique()
-    most_recent_dates.sort()
-    most_recent_dates = most_recent_dates[::-1][:2]
+    most_recent_dates = history.month.drop_duplicates().sort_values(ascending=False)[:2]
 
     # Find complete DataFrame
     df = (
@@ -22,6 +20,10 @@ def position_metrics(history: pd.DataFrame):
         .groupby("month")
         .sum()
         .reset_index()
+        .sort_values(
+            ["month"],
+            ascending=False,
+        )
     )
     df["variation"] = 100 * (df.balance - df.total_invested) / df.total_invested
     df["return"] = (
