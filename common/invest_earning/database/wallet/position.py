@@ -96,9 +96,11 @@ class Position:
             avg_price,
         )
         balance = shares * current_price
-        total_earnings = shares * total_earnings_per_share.c.total_earnings
-        total_ir_adjusted_earnings = (
-            shares * total_earnings_per_share.c.total_ir_adjusted_earnings
+        total_earnings = shares * sa.sql.func.coalesce(
+            total_earnings_per_share.c.total_earnings, 0
+        )
+        total_ir_adjusted_earnings = shares * sa.sql.func.coalesce(
+            total_earnings_per_share.c.total_ir_adjusted_earnings, 0
         )
 
         return list(
@@ -119,7 +121,7 @@ class Position:
                     * ((total_ir_adjusted_earnings + balance) - total_invested)
                     / total_invested,
                 )
-                .join(
+                .outerjoin(
                     total_earnings_per_share,
                     total_earnings_per_share.c.b3_code == cte.c.b3_code,
                 )
