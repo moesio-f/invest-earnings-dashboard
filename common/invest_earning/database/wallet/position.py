@@ -4,6 +4,7 @@ from dataclasses import dataclass, fields
 from datetime import date
 
 import sqlalchemy as sa
+import sqlalchemy.orm
 
 from .asset import Asset, AssetKind, Earning, Transaction, TransactionKind
 from .market_price import MarketPrice
@@ -30,6 +31,68 @@ class Position:
         if reference_date is None:
             reference_date = date.max
 
+        # Obtaining base information
+        base = cls._get_base(session, reference_date)
+        positions = []
+        for b in base:
+            data = dict()
+            data.update(b)
+
+            # Querying earnings
+            earnings = (
+                (
+                    session.query(Earning)
+                    .where(Earning.asset_b3_code == data["b3_code"])
+                    .where(Earning.payment_date <= reference_date)
+                )
+                .options(sa.orm.selectinload(Earning.right_to_earnings))
+                .all()
+            )
+
+            # Find total earnings
+            total_earnings, total_ir_adjusted_earnings = 0, 0
+            for e in earnings:
+                # Find shares
+                buy_shares, sell_shares = 0, 0
+                for t in e.right_to_earnings:
+                    if t.kind == TransactionKind.buy:
+                        buy_shares += t.shares
+                    else:
+                        sell_shares += t.shares
+                shares = buy_shares - sell_shares
+
+                # Update total
+                v = shares * e.value_per_share
+
+                total_earnings += v
+                total_ir_adjusted_earnings += v * (1 - e.ir_percentage / 100)
+
+            # Create position
+            total_invested = data["total_invested"]
+            data["total_earnings"] = total_earnings
+            data["total_ir_adjusted_earnings"] = total_ir_adjusted_earnings
+            data["yield_on_cost"] = (
+                (100 * total_ir_adjusted_earnings / total_invested)
+                if total_invested != 0
+                else 0
+            )
+            data["rate_of_return"] = (
+                (
+                    100
+                    * (data["balance"] + total_ir_adjusted_earnings - total_invested)
+                    / total_invested
+                )
+                if data["total_invested"] != 0
+                else 0
+            )
+            positions.append(cls(**data))
+
+        return positions
+
+    @classmethod
+    def _get_base(
+        cls, session: sa.orm.Session, reference_date: date = None
+    ) -> list[dict]:
         # Most recent prices
         max_date = (
             session.query(
@@ -47,20 +110,6 @@ class Position:
             )
             .where(MarketPrice.asset_b3_code == max_date.c.asset_b3_code)
             .where(MarketPrice.reference_date == max_date.c.reference_date)
-            .subquery()
-        )
-
-        # Total earnings paid per share up to reference_date
-        total_earnings_per_share = (
-            session.query(
-                Earning.asset_b3_code.label("b3_code"),
-                sa.sql.func.sum(
-                    Earning.value_per_share * (1 - (Earning.ir_percentage / 100))
-                ).label("total_ir_adjusted_earnings"),
-                sa.sql.func.sum(Earning.value_per_share).label("total_earnings"),
-            )
-            .where(Earning.payment_date <= reference_date)
-            .group_by(Earning.asset_b3_code)
             .subquery()
         )
 
@@ -96,16 +145,10 @@ class Position:
             avg_price,
         )
         balance = shares * current_price
-        total_earnings = shares * sa.sql.func.coalesce(
-            total_earnings_per_share.c.total_earnings, 0
-        )
-        total_ir_adjusted_earnings = shares * sa.sql.func.coalesce(
-            total_earnings_per_share.c.total_ir_adjusted_earnings, 0
-        )
 
         return list(
             map(
-                lambda v: Position(**{k.name: v for k, v in zip(fields(cls), v)}),
+                lambda v: {k.name: v for k, v in zip(fields(cls), v)},
                 session.query(
                     cte.c.b3_code,
                     shares,
@@ -114,22 +157,11 @@ class Position:
                     cte.c.asset_kind,
                     current_price,
                     balance,
-                    total_earnings,
-                    total_ir_adjusted_earnings,
-                    100 * total_ir_adjusted_earnings / total_invested,
-                    100
-                    * ((total_ir_adjusted_earnings + balance) - total_invested)
-                    / total_invested,
-                )
-                .outerjoin(
-                    total_earnings_per_share,
-                    total_earnings_per_share.c.b3_code == cte.c.b3_code,
                 )
                 .outerjoin(
                     most_recent_prices,
                     most_recent_prices.c.b3_code == cte.c.b3_code,
                 )
-                .where(cte.c.buy - cte.c.sell != 0)
                 .all(),
             )
         )
