@@ -2,6 +2,8 @@
 de entidades.
 """
 
+from datetime import timedelta
+
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -27,6 +29,34 @@ def wealth_history(df: pd.DataFrame):
     )
     fig.update_yaxes(title="Patrimônio (R$)")
     fig.update_xaxes(tickmode="array", tickvals=df["Mês"], tickformat="%b/%Y")
+    st.plotly_chart(fig)
+
+
+def return_history(df: pd.DataFrame):
+    df = (
+        df[["month", "balance", "total_invested", "total_ir_adjusted_earnings"]]
+        .groupby("month")
+        .sum()
+        .reset_index()
+    )
+    df["return"] = (
+        100
+        * (df.balance + df.total_ir_adjusted_earnings - df.total_invested)
+        / df.total_invested
+    )
+    df = df[["month", "return"]].sort_values("month", ascending=True)
+    fig = px.area(
+        df,
+        x="month",
+        y="return",
+        labels={"month": "Mês", "return": "Rentabilidade (%)"},
+        markers=True,
+        range_x=(
+            df.iloc[0].month - timedelta(days=15),
+            df.iloc[-1].month + timedelta(days=15),
+        ),
+    )
+    fig.update_xaxes(tickmode="array", tickvals=df.month, tickformat="%b/%Y")
     st.plotly_chart(fig)
 
 

@@ -14,18 +14,20 @@ state.update_state()
 st.title("Posição de Investimentos")
 
 # === Patrimônio e Distribuição ===
+st.pills(
+    "Meses:",
+    ["3M", "6M", "12M", "24M"],
+    key=state.register_component("n_months_history"),
+    default="3M",
+)
+
 col_a, col_b = st.columns(2)
+
 with col_a:
-    st.pills(
-        "Meses:",
-        ["3M", "6M", "12M", "24M"],
-        key=state.register_component("n_months_history"),
-        default="3M",
-    )
     charts.wealth_history(state.variables.history)
 
 with col_b:
-    charts.position_disitribution(state.variables.current_position)
+    charts.return_history(state.variables.history)
 
 
 # === Métricas globais ===

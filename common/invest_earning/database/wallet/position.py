@@ -5,7 +5,7 @@ from datetime import date
 
 import sqlalchemy as sa
 
-from .asset import Asset, AssetKind, Transaction, TransactionKind, Earning
+from .asset import Asset, AssetKind, Earning, Transaction, TransactionKind
 from .market_price import MarketPrice
 
 
