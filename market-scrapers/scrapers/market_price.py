@@ -146,7 +146,8 @@ def extract_data(
 
 
 @click.command(name="market_price")
-def main():
+@click.option("--force", "-f", is_flag=True, flag_value=True)
+def main(force):
     # Get today
     today = date.today()
 
@@ -167,7 +168,7 @@ def main():
         min_date, max_date = min_max_dates_for(b3_code)
 
         # Is extraction required?
-        if min_date > start_date or max_date < end_date:
+        if min_date > start_date or max_date < end_date or force:
             logger.info("Extraction required.")
 
             # Update lower and upper limits for extraction

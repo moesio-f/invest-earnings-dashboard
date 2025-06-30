@@ -9,7 +9,7 @@ do
     echo "[run_blocking] Starting execution at $(date +%T)."
 
     # Run price scraper
-    python -m scrapers.market_price
+    python -m scrapers.market_price -f
 
     # Sleep for specified time
     sleep ${SLEEP_INTERVAL:-0.5d}
