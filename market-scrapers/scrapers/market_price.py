@@ -67,7 +67,9 @@ def extract_strategy_1(
         d["date"] = datetime.strptime(d["date"], "%d/%m/%y %H:%M").date()
 
     # Filter to required period
-    return list(filter(lambda d: d["date"] > start_date and d["date"] < end_date, data))
+    return list(
+        filter(lambda d: d["date"] >= start_date and d["date"] <= end_date, data)
+    )
 
 
 def extract_strategy_2(
@@ -105,7 +107,9 @@ def extract_strategy_2(
         for d in data:
             d["date"] = datetime.strptime(d["created_at"], "%d/%m/%Y").date()
             del d["created_at"]
-        return data
+        return list(
+            filter(lambda d: d["date"] >= start_date and d["date"] <= end_date, data)
+        )
 
     return []
 
