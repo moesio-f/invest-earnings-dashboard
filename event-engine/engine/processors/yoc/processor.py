@@ -334,7 +334,19 @@ class YoCProcessor:
                 earning.asset_b3_code,
                 earning.id,
             )
-            return Position(b3_code=earning.asset_b3_code, shares=0, avg_price=0.0)
+            return Position(
+                b3_code=earning.asset_b3_code,
+                shares=0,
+                avg_price=0.0,
+                total_invested=0.0,
+                asset_kind=earning.asset.kind,
+                current_price=0.0,
+                balance=0.0,
+                total_earnings=0.0,
+                total_ir_adjusted_earnings=0.0,
+                yield_on_cost=0.0,
+                rate_of_return=0.0,
+            )
 
         try:
             position = next(
