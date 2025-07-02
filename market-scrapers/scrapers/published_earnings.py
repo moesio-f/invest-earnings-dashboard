@@ -68,7 +68,7 @@ def extract_strategy_1(b3_code: str, url: str, default_ir: float = None) -> list
             continue
 
         # Extract data
-        contents = [c.string for c in contents]
+        contents = [c.text.strip() for c in contents]
         kind, hold, payment, value = contents
 
         # Add to dictionary
