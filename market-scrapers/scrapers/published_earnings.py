@@ -105,11 +105,11 @@ def extract_data(b3_code: str, url: str, default_ir: float = None):
     data = fn(b3_code, url, default_ir)
 
     # If data available, filter and persist
+    available = available_earnings(b3_code)
     data = [
         d
         for d in data
-        if (d["hold_date"], d["payment_date"], d["kind"])
-        not in available_earnings(b3_code)
+        if (d["hold_date"], d["payment_date"], d["kind"]) not in available
     ]
     if len(data) > 0:
         for d in data:
