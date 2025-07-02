@@ -208,6 +208,10 @@ class YoCProcessor:
                     "Running analyis for %d earnings.",
                     len(earnings_ids),
                 )
+            # First drop possibly missing ids (prune)
+            self._drop_earning_yield_where(EarningYield.earning_id.not_in(earnings_ids))
+
+            # Then, create or update existing ones
             self._create_or_update_multiple(earnings_ids)
         else:
             logger.debug(
