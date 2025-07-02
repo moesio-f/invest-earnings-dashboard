@@ -265,7 +265,7 @@ def asset_earnings(
 ) -> list[EarningSchemaV1]:
     """Retorna todos proventos cadastrados para um ativo."""
     return list(
-        session.query(Earning).query(Earning.asset_b3_code == asset_b3_code).all()
+        session.query(Earning).where(Earning.asset_b3_code == asset_b3_code).all()
     )
 
 

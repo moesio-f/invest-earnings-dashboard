@@ -86,3 +86,5 @@ bak/
 # Data
 data/*
 !data/economic_data.parquet
+market-scrapers/config/*
+!market-scrapers/config/.gitkeep

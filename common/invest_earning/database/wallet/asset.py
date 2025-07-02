@@ -116,5 +116,9 @@ class Transaction(WalletBase):
 class EarningsRights(WalletBase):
     __tablename__ = "earnings_rights"
 
-    earning = mapped_column(ForeignKey("earning.id"), primary_key=True)
-    has_right = mapped_column(ForeignKey("transaction.id"), primary_key=True)
+    earning = mapped_column(
+        ForeignKey("earning.id", ondelete="CASCADE"), primary_key=True
+    )
+    has_right = mapped_column(
+        ForeignKey("transaction.id", ondelete="CASCADE"), primary_key=True
+    )

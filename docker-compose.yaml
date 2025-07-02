@@ -62,13 +62,19 @@ services:
       DB_URL: "postgresql+psycopg://postgres@database/wallet"
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
+      WALLET_API: "http://wallet:80/"
+      CONFIG_PATH: "/code/asset_earnings.json"
+      PREVIOUS_DAYS: 30
       TZ: "Brazil/East"
     volumes:
       - ./data:/code/bootstrap
       - ./bak:/code/backup
+      - ./market-scrapers/config/config.json:/code/asset_earnings.json
     depends_on:
       migrations:
         condition: service_completed_successfully
+      wallet:
+        condition: service_healthy
 
   wallet:
     build:
@@ -77,7 +83,6 @@ services:
       DB_URL: "postgresql+psycopg://postgres@database/wallet"
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
-      PREVIOUS_DAYS: 30
       TZ: "Brazil/East"
     command: ["--port", "80"]
     healthcheck:

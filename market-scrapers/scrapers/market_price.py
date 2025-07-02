@@ -1,4 +1,4 @@
-"""Scrapper de preços de mercado."""
+"""Scraper de preços de mercado."""
 
 import logging
 import random
