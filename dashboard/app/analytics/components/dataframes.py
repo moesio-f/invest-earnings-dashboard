@@ -12,7 +12,7 @@ def earning_yield_dataframe(df: pd.DataFrame):
     df["total_earnings"] = df.shares * df.ir_adjusted_value_per_share
 
     st.dataframe(
-        df,
+        df.sort_values("payment_date", ascending=False),
         hide_index=True,
         column_order=[
             "b3_code",
