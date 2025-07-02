@@ -6,7 +6,7 @@ import logging
 from datetime import date
 
 import pandas as pd
-from app.analytics import constants, db
+from app.analytics import db
 from app.utils.state import PageState
 from invest_earning.database.analytic.earning_yield import EarningYield
 
@@ -33,7 +33,9 @@ class EconomicIndexState(PageState):
                 self.variables.earning_yield = pd.DataFrame(
                     [
                         {k: getattr(ey, k) for k in self._EY_COLUMNS}
-                        for ey in session.query(EarningYield).all()
+                        for ey in session.query(EarningYield)
+                        .where(EarningYield.shares > 0)
+                        .all()
                     ],
                     columns=self._EY_COLUMNS,
                 )

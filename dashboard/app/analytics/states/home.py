@@ -35,7 +35,9 @@ class HomeState(PageState):
                 self.variables.earning_yield = pd.DataFrame(
                     [
                         {k: getattr(ey, k) for k in self._EY_COLUMNS}
-                        for ey in session.query(EarningYield).all()
+                        for ey in session.query(EarningYield)
+                        .where(EarningYield.shares > 0)
+                        .all()
                     ],
                     columns=self._EY_COLUMNS,
                 )
