@@ -1,8 +1,8 @@
 <h1 align="center">
   <div style="display: flex; justify-content: space-between;">
-  <a><img src="https://streamlit.io/images/brand/streamlit-logo-primary-colormark-darktext.png" alt="streamlit logo" height="80"></a>
-  <a><img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" alt="Python logo" height="80"></a>
-  <a><img src="https://pandas.pydata.org/static/img/pandas.svg" alt="pandas logo" height="80"></a>
+  <a><img src="https://streamlit.io/images/brand/streamlit-logo-primary-colormark-darktext.png" alt="streamlit logo" style="height: 80px;"></a>
+  <a><img src="https://s3.dualstack.us-east-2.amazonaws.com/pythondotorg-assets/media/community/logos/python-logo-only.png" alt="Python logo" style="height: 80px;"></a>
+  <a><img src="https://pandas.pydata.org/static/img/pandas.svg" alt="pandas logo" style="height: 80px;"></a>
   </div>
   Dashboard para Análise de Proventos
   <br>
