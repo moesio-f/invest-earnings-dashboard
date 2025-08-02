@@ -70,3 +70,26 @@ def position_metrics(history: pd.DataFrame):
         ],
     ):
         container.metric(label, value, delta=delta, help=help)
+
+
+def current_position_metrics(position: pd.DataFrame):
+    balance = position.balance.sum()
+    total_invested = position.total_invested.sum()
+    total_ir_adjusted_earnings = position.total_ir_adjusted_earnings.sum()
+    for container, label, value, help in zip(
+        [*st.columns(4)],
+        ["Ativos", "Patrimônio (R$)", "Variação (%)", "Rentabilidade (%)"],
+        [
+            f"{position.b3_code.nunique()}",
+            f"R$ {balance:,.2f}",
+            f"{100 * (balance - total_invested) / total_invested:.2f}%",
+            f"{100 * (balance + total_ir_adjusted_earnings - total_invested) / total_invested:.2f}%",
+        ],
+        [
+            "Quantidade de ativos.",
+            "Patrimônio total, representa o valor atual.",
+            "Variação do valor investido para o patrimônio atual.",
+            "Variação do patrimônio + proventos com relação ao total investido.",
+        ],
+    ):
+        container.metric(label, value, help=help)

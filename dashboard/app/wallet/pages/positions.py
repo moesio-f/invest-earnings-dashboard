@@ -39,5 +39,8 @@ for idx, kind in enumerate(constants.AssetKinds):
         state.variables.current_position.asset_kind == kind
     ].drop(columns=["asset_kind"])
     if len(df) > 0:
-        with st.expander(kind, expanded=(idx == 0)):
+        with st.expander(
+            constants.AssetKindMapper.get(kind, kind), expanded=(idx == 0)
+        ):
+            metrics.current_position_metrics(df)
             dataframes.position_dataframe(df.sort_values("b3_code"))
