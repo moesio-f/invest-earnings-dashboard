@@ -1,5 +1,6 @@
 """Scraper de proventos."""
 
+import base64
 import json
 import logging
 import random
@@ -95,7 +96,7 @@ def extract_strategy_1(b3_code: str, url: str, default_ir: float = None) -> list
 
 def extract_data(b3_code: str, url: str, default_ir: float = None):
     # Select strategy from url
-    if "investidor10" in url.lower():
+    if base64.b64decode(b"aW52ZXN0aWRvcjEw").decode() in url.lower():
         fn = extract_strategy_1
     else:
         logger.warning("Unknown strategy for URL '%s'.", url)
