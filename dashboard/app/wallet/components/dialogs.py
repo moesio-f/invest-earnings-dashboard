@@ -156,6 +156,7 @@ def _earning_dialog(
     value_per_share_editable: bool = True,
     ir_percentage=0.0,
     ir_percentage_editable: bool = True,
+    include_delete: bool = True,
     submit_text="Adicionar",
 ):
     prefix = _PREFIX.format(prefix)
@@ -205,6 +206,9 @@ def _earning_dialog(
             format="%0.2f",
             disabled=not ir_percentage_editable,
         )
+
+        if include_delete:
+            st.toggle("Remover Provento", value=False, key=f"{prefix}_should_delete")
 
         submit = st.form_submit_button(
             submit_text,

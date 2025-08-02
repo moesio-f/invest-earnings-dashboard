@@ -77,7 +77,7 @@ def select_earning(data: ScopedState):
             value_per_share=item.value_per_share,
             ir_percentage=item.ir_percentage,
             update_fn=functools.partial(
-                callbacks.update_earning, earning_id=item["id"].item()
+                callbacks.update_or_delete_earning, earning_id=item["id"].item()
             ),
         )
 

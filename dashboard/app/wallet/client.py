@@ -170,6 +170,15 @@ class Client:
             )
             raise
 
+    def delete_earning(self, earning_id: int):
+        requests.delete(
+            self._join(
+                self._earning_url,
+                "delete",
+                earning_id,
+            )
+        ).raise_for_status()
+
     def list_transactions(self) -> pd.DataFrame:
         response = requests.get(self._join(self._transaction_url, "list"))
         response.raise_for_status()
