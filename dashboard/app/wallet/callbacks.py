@@ -115,7 +115,7 @@ def update_or_delete_earning(
         "Called with following data: %s", {k: v.get() for k, v in data.items()}
     )
 
-    if data.get("should_delete", False):
+    if data.should_delete():
         logger.debug(
             "Operation is delete. Ignoring all fields and only using `earning_id`."
         )
