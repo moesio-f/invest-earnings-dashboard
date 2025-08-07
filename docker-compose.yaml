@@ -66,6 +66,7 @@ services:
       CONFIG_PATH: "/code/asset_earnings.json"
       PREVIOUS_DAYS: 30
       TZ: "Brazil/East"
+      PYTHONUNBUFFERED: 1
     volumes:
       - ./data:/code/bootstrap
       - ./bak:/code/backup
