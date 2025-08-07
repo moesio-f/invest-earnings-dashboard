@@ -163,6 +163,4 @@ services:
 networks:
   default:
     name: invest-earnings-network
-    ipam:
-      config:
-        - subnet: 172.28.28.0/24
+    enable_ipv6: true

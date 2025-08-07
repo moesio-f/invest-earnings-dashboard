@@ -15,6 +15,8 @@ from fake_useragent import UserAgent
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings
 
+from .config import CONFIG as config
+
 logger = logging.getLogger(__name__)
 
 
@@ -31,13 +33,15 @@ class PublishedEarningsConfig(BaseSettings):
 
 def has_in_wallet(asset_code: str) -> bool:
     return requests.get(
-        f"{PublishedEarningsConfig().wallet_api}/v1/asset/info/{asset_code}"
+        f"{PublishedEarningsConfig().wallet_api}/v1/asset/info/{asset_code}",
+        timeout=config.timeout,
     ).ok
 
 
 def available_earnings(asset_code: str) -> set[tuple[date, date, str]]:
     response = requests.get(
-        f"{PublishedEarningsConfig().wallet_api}/v1/earnings/info/{asset_code}"
+        f"{PublishedEarningsConfig().wallet_api}/v1/earnings/info/{asset_code}",
+        timeout=config.timeout,
     )
     response.raise_for_status()
     return set((d["hold_date"], d["payment_date"], d["kind"]) for d in response.json())
@@ -55,7 +59,9 @@ def extract_strategy_1(b3_code: str, url: str, default_ir: float = None) -> list
         return "Dividendo", 0.0
 
     # Base get
-    response = requests.get(url, headers={"User-Agent": UserAgent().random})
+    response = requests.get(
+        url, headers={"User-Agent": UserAgent().random}, timeout=config.timeout
+    )
     response.raise_for_status()
 
     # Parsing
@@ -115,7 +121,9 @@ def extract_data(b3_code: str, url: str, default_ir: float = None):
     if len(data) > 0:
         for d in data:
             requests.post(
-                f"{PublishedEarningsConfig().wallet_api}/v1/earnings/create", json=d
+                f"{PublishedEarningsConfig().wallet_api}/v1/earnings/create",
+                json=d,
+                timeout=config.timeout,
             ).raise_for_status()
         logger.info("Created %d earnings for asset %s.", len(data), b3_code)
     else:

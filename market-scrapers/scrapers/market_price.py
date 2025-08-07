@@ -15,6 +15,7 @@ from invest_earning.database.wallet import Asset, AssetKind, MarketPrice
 from pydantic_settings import BaseSettings
 
 from . import db
+from .config import CONFIG as config
 from .dispatcher import Dispatcher
 
 logger = logging.getLogger(__name__)
@@ -62,7 +63,9 @@ def extract_strategy_1(
         f"https://{base64.b64decode(b'c3RhdHVzaW52ZXN0').decode()}.com.br"
         f"/{map_kind(kind)}/tickerprice?ticker={b3_code}&type=4&currences[]=1"
     )
-    response = requests.get(url, headers={"User-Agent": UserAgent().random})
+    response = requests.get(
+        url, headers={"User-Agent": UserAgent().random}, timeout=config.timeout
+    )
     response.raise_for_status()
 
     # Get and parse data
@@ -91,7 +94,9 @@ def extract_strategy_2(
         f"https://{base64.b64decode(b'aW52ZXN0aWRvcjEw').decode()}.com.br"
         f"/{map_kind(kind)}/{b3_code}/"
     )
-    response = requests.get(url, headers={"User-Agent": UserAgent().random})
+    response = requests.get(
+        url, headers={"User-Agent": UserAgent().random}, timeout=config.timeout
+    )
     response.raise_for_status()
 
     # Find target url in page
@@ -103,7 +108,9 @@ def extract_strategy_2(
         # Query for maximum allowed
         url = re.sub(r"/(?P<id>[0-9]+)/(?P<size>[0-9]+)/", "/\g<id>/3650/", url)
 
-        response = requests.get(url, headers={"User-Agent": UserAgent().random})
+        response = requests.get(
+            url, headers={"User-Agent": UserAgent().random}, timeout=config.timeout
+        )
         response.raise_for_status()
         data = response.json()
 
