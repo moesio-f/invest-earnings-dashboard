@@ -227,6 +227,7 @@ class Client:
         date: date = None,
         kind: str = None,
         value_per_share: float = None,
+        shares: int = None,
         delete: bool = False,
     ):
         if delete:
@@ -242,6 +243,7 @@ class Client:
                 date=self._maybe_date_to_isoformat(date),
                 kind=kind,
                 value_per_share=value_per_share,
+                shares=shares,
             ),
         ).raise_for_status()
 

@@ -6,6 +6,7 @@ from io import StringIO
 from typing import Callable
 
 import pandas as pd
+from app.utils import decorators
 from app.utils.state import Manager, ScopedState
 
 from .client import WalletApi
@@ -13,6 +14,7 @@ from .client import WalletApi
 logger = logging.getLogger(__name__)
 
 
+@decorators.log_exceptions(logger)
 def create_asset(
     data: ScopedState,
     callback: Callable[[], None] = None,
@@ -37,6 +39,7 @@ def create_asset(
         callback()
 
 
+@decorators.log_exceptions(logger)
 def update_asset(data: ScopedState, callback: Callable[[], None] = None):
     WalletApi.update_asset(
         b3_code=data.b3_code(),
@@ -50,6 +53,7 @@ def update_asset(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+@decorators.log_exceptions(logger)
 def create_transaction(data: ScopedState, callback: Callable[[], None] = None):
     if "bulk_data" not in data:
         data = [
@@ -71,6 +75,7 @@ def create_transaction(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+@decorators.log_exceptions(logger)
 def update_transaction(
     data: ScopedState, transaction_id: int, callback: Callable[[], None] = None
 ):
@@ -85,6 +90,7 @@ def update_transaction(
         callback()
 
 
+@decorators.log_exceptions(logger)
 def create_earning(data: ScopedState, callback: Callable[[], None] = None):
     if "bulk_data" not in data:
         data = [
@@ -107,6 +113,7 @@ def create_earning(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+@decorators.log_exceptions(logger)
 def update_or_delete_earning(
     data: ScopedState, earning_id: int, callback: Callable[[], None] = None
 ):
@@ -136,6 +143,7 @@ def update_or_delete_earning(
         callback()
 
 
+@decorators.log_exceptions(logger)
 def add_economic(data: ScopedState, callback: Callable[[], None] = None):
     logger.debug("Called with following data: %s", data.keys())
     if "bulk_data" in data:
@@ -156,6 +164,7 @@ def add_economic(data: ScopedState, callback: Callable[[], None] = None):
         callback()
 
 
+@decorators.log_exceptions(logger)
 def csv_insert(
     data: ScopedState,
     fn: Callable[[ScopedState], None],
@@ -169,6 +178,7 @@ def csv_insert(
     # Create state
     state = Manager.get_data_state("csv_insert")
     state.bulk_data = df.to_dict(orient="records")
+    logger.debug(f"Loaded bulk data:\n{state.bulk_data}")
 
     # Apply function
     fn(state)

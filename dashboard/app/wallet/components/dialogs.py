@@ -341,7 +341,6 @@ def add_economic_data(
         st.number_input(
             "Variação (%):",
             key=f"{prefix}_percentage_change",
-            min_value=0.0,
             step=0.01,
             value=0.0,
             format="%0.2f",
