@@ -8,6 +8,10 @@ while true
 do
     echo "[run_blocking] Starting execution at $(date +%T)."
 
+    # Run economic index
+    echo "[run_blocking] Running Economic Index scraper."
+    python -m scrapers.economic_index
+
     # Run earning scraper
     echo "[run_blocking] Running Published Earnings scraper."
     python -m scrapers.published_earnings

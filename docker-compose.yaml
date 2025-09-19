@@ -62,7 +62,7 @@ services:
       DB_URL: "postgresql+psycopg://postgres@database/wallet"
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
-      WALLET_API: "http://wallet:80/"
+      WALLET_API: "http://wallet:80"
       CONFIG_PATH: "/code/asset_earnings.json"
       PREVIOUS_DAYS: 30
       TZ: "Brazil/East"
