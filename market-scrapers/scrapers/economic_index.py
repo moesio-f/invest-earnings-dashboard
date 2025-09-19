@@ -28,7 +28,6 @@ def main():
     for index, url in zip(["CDI", "IPCA"], [URL_CDI, URL_IPCA]):
         for last in requests.get(url).json()[-4:]:
             try:
-                last = [-1]
                 date = last["data"].split("/")
                 requests.post(
                     f"{wallet_api}/v1/economic/add",
@@ -42,7 +41,8 @@ def main():
                         ]
                     ),
                 )
-            except:
+            except Exception as e:
+                logger.info("Couldn't update %s on date %s: %s", index, last["data"], e)
                 pass
 
 
