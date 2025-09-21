@@ -1,5 +1,7 @@
 """YoC vs Índices Econômicos."""
 
+from datetime import date
+
 import pandas as pd
 import streamlit as st
 from app.analytics.components import charts, metrics
@@ -9,6 +11,7 @@ from app.config import ST_CONFIG as config
 # ===== Inicialização do estado da página =====
 state = EconomicIndexState()
 state.update_state()
+today = date.today()
 
 # =============================================
 # ==== Título ====
@@ -29,14 +32,14 @@ if len(state.variables.earning_yield) > 0:
     )
     start_date = cols[2].date_input(
         "Data inicial:",
-        value=state.variables.min_date,
+        value=today.replace(day=1),
         max_value=state.variables.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=state.update_state,
     )
     end_date = cols[3].date_input(
         "Data final:",
-        value=state.variables.max_date,
+        value=today,
         max_value=state.variables.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=state.update_state,

@@ -21,7 +21,7 @@ st.title("Relatórios & Documentos")
 cols = st.columns(3)
 asset = cols[0].selectbox(
     "Ativo:",
-    ["Todos"] + documents.asset_b3_code.unique().tolist(),
+    ["Todos"] + documents.asset_b3_code.sort_values().unique().tolist(),
     key=state.register_component("filter_asset_code"),
 )
 start_date = cols[1].date_input(
