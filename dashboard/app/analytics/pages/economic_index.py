@@ -32,7 +32,7 @@ if len(state.variables.earning_yield) > 0:
     )
     start_date = cols[2].date_input(
         "Data inicial:",
-        value=today.replace(day=1),
+        value=today.replace(day=1, month=today.month - 1),
         max_value=state.variables.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=state.update_state,
