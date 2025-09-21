@@ -39,7 +39,7 @@ if len(state.variables.earning_yield) > 0:
     )
     end_date = cols[3].date_input(
         "Data final:",
-        value=today,
+        value=today.replace(day=1, month=today.month + 1),
         max_value=state.variables.max_date,
         format=config.ST_DATE_FORMAT,
         on_change=state.update_state,
@@ -103,11 +103,14 @@ if len(state.variables.earning_yield) > 0:
     )
 
     # Show charts and metrics
-    metrics.montly_index_yoc_metrics(df)
-    charts.bar_yoc_variation(
-        df,
-        cumulative,
-        relative_bars,
-    )
+    if len(df) > 0:
+        metrics.montly_index_yoc_metrics(df)
+        charts.bar_yoc_variation(
+            df,
+            cumulative,
+            relative_bars,
+        )
+    else:
+        st.markdown("> Não existem proventos para esse período.")
 else:
     st.markdown("> Cadastre proventos e índices ecônomicos para acessar o dashboard.")
