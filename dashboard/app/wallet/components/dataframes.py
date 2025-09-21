@@ -203,3 +203,26 @@ def position_dataframe(position: pd.DataFrame):
             ),
         },
     )
+
+
+def document_dataframe(document: pd.DataFrame):
+    st.dataframe(
+        document,
+        column_order=[
+            "asset_b3_code",
+            "title",
+            "publish_date",
+            "url",
+        ],
+        hide_index=True,
+        column_config={
+            "asset_b3_code": st.column_config.TextColumn(
+                "Ativo", pinned=True, width="medium"
+            ),
+            "title": st.column_config.TextColumn("Título"),
+            "publish_date": st.column_config.DateColumn(
+                "Data de Publicação", format="MM/YYYY"
+            ),
+            "url": st.column_config.LinkColumn("URL"),
+        },
+    )

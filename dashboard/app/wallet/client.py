@@ -25,6 +25,7 @@ class Client:
         self._transaction_url = self._join(self._url, "transactions")
         self._economic_url = self._join(self._url, "economic")
         self._position_url = self._join(self._url, "position")
+        self._document_url = self._join(self._url, "document")
 
     def list_assets(self) -> pd.DataFrame:
         response = requests.get(self._join(self._asset_url, "list"))
@@ -282,7 +283,7 @@ class Client:
             )
         ).raise_for_status()
 
-    def get_position(self, reference_date: date = None):
+    def get_position(self, reference_date: date = None) -> pd.DataFrame:
         if reference_date is None:
             reference_date = date.today()
 
@@ -306,6 +307,15 @@ class Client:
                 "rate_of_return",
             ],
         )
+
+    def list_documents(self) -> pd.DataFrame:
+        response = requests.get(self._join(self._document_url, "list"))
+        response.raise_for_status()
+        df = pd.DataFrame(
+            response.json(), columns=["asset_b3_code", "title", "publish_date", "url"]
+        )
+        df.publish_date = pd.to_datetime(df.publish_date).dt.date
+        return df
 
     @staticmethod
     def _maybe_date_to_isoformat(v: date | None) -> str | None:

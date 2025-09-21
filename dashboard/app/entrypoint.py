@@ -19,6 +19,9 @@ pg = st.navigation(
         st.Page("analytics/pages/home.py", title="Home", icon=":material/home:"),
         st.Page("wallet/pages/positions.py", title="Posição", icon=":material/wallet:"),
         st.Page(
+            "wallet/pages/documents.py", title="Documentos", icon=":material/article:"
+        ),
+        st.Page(
             "analytics/pages/economic_index.py",
             title="YoC vs Indicadores",
             icon=":material/monitoring:",
