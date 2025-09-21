@@ -46,3 +46,11 @@ class EconomicSchemaV1(BaseModel):
     index: EconomicIndex
     reference_date: date
     percentage_change: float
+
+
+class AssetDocumentSchemaV1(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    asset_b3_code: str
+    title: str
+    publish_date: date
+    url: str

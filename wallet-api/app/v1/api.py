@@ -13,6 +13,7 @@ from app.dispatcher import RequiresDispatcher
 from fastapi import APIRouter, Body, HTTPException, Response
 from invest_earning.database.wallet import (
     Asset,
+    AssetDocument,
     AssetKind,
     Earning,
     EarningKind,
@@ -25,6 +26,7 @@ from invest_earning.database.wallet import (
 
 from . import utils
 from .models import (
+    AssetDocumentSchemaV1,
     AssetSchemaV1,
     EarningSchemaV1,
     EconomicSchemaV1,
@@ -39,6 +41,7 @@ earnings = APIRouter(prefix="/earnings", tags=["v1 · Proventos"])
 transactions = APIRouter(prefix="/transactions", tags=["v1 · Transações"])
 economic = APIRouter(prefix="/economic", tags=["v1 · Dados Econômicos"])
 position = APIRouter(prefix="/position", tags=["v1 · Posições"])
+document = APIRouter(prefix="/document", tags=["v1 · Documentos"])
 
 
 @asset.get("/info/{b3_code}")
@@ -494,8 +497,24 @@ def position_on_date(reference_date: date, session=RequiresSession) -> list[Posi
     return Position.get(session, reference_date)
 
 
+@document.get("/list")
+def list_asset_documents(session=RequiresSession) -> list[AssetDocumentSchemaV1]:
+    return list(session.query(AssetDocument).all())
+
+
+@document.post("/add")
+def add_document(
+    document: AssetDocumentSchemaV1, session=RequiresSession
+) -> AssetDocumentSchemaV1:
+    doc = AssetDocument(**document.model_dump())
+    session.add(doc)
+    session.commit()
+    return doc
+
+
 router.include_router(asset)
 router.include_router(earnings)
 router.include_router(transactions)
 router.include_router(economic)
 router.include_router(position)
+router.include_router(document)
