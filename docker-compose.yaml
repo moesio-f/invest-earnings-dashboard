@@ -63,8 +63,8 @@ services:
       NOTIFICATION_QUEUE: "notification.router.queue"
       BROKER_URL: "amqp://guest:guest@broker:5672/?heartbeat=60"
       WALLET_API: "http://wallet:80"
-      CONFIG_PATH: "/code/asset_earnings.json"
-      PREVIOUS_DAYS: 30
+      MARKET_PRICE_CONFIG_PATH: "/code/asset_earnings.json"
+      MARKET_PRICE_PREVIOUS_DAYS: 30
       TZ: "Brazil/East"
       PYTHONUNBUFFERED: 1
     volumes:

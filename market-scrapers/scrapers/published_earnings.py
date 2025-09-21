@@ -6,14 +6,12 @@ import logging
 import random
 import time
 from datetime import date, datetime
-from pathlib import Path
 
 import click
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
 from pydantic import BaseModel
-from pydantic_settings import BaseSettings
 
 from .config import CONFIG as config
 
@@ -26,21 +24,16 @@ class AssetConfig(BaseModel):
     default_ir: float | None = None
 
 
-class PublishedEarningsConfig(BaseSettings):
-    config_path: Path
-    wallet_api: str
-
-
 def has_in_wallet(asset_code: str) -> bool:
     return requests.get(
-        f"{PublishedEarningsConfig().wallet_api}/v1/asset/info/{asset_code}",
+        f"{config.wallet_api}/v1/asset/info/{asset_code}",
         timeout=config.timeout,
     ).ok
 
 
 def available_earnings(asset_code: str) -> set[tuple[date, date, str]]:
     response = requests.get(
-        f"{PublishedEarningsConfig().wallet_api}/v1/earnings/info/{asset_code}",
+        f"{config.wallet_api}/v1/earnings/info/{asset_code}",
         timeout=config.timeout,
     )
     response.raise_for_status()
@@ -121,7 +114,7 @@ def extract_data(b3_code: str, url: str, default_ir: float = None):
     if len(data) > 0:
         for d in data:
             requests.post(
-                f"{PublishedEarningsConfig().wallet_api}/v1/earnings/create",
+                f"{config.wallet_api}/v1/earnings/create",
                 json=d,
                 timeout=config.timeout,
             ).raise_for_status()
@@ -133,7 +126,7 @@ def extract_data(b3_code: str, url: str, default_ir: float = None):
 @click.command(name="published_earnings")
 def main():
     # Obtain registered assets
-    with PublishedEarningsConfig().config_path.open("r") as f:
+    with config.market_price_config_path.open("r") as f:
         assets = json.load(f)
     assets = [AssetConfig.model_validate(d) for d in assets]
     random.shuffle(assets)

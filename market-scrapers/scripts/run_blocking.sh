@@ -12,6 +12,10 @@ do
     echo "[run_blocking] Running Economic Index scraper."
     python -m scrapers.economic_index
 
+    # Run economic index
+    echo "[run_blocking] Running FII document scraper."
+    python -m scrapers.fii_documents
+
     # Run earning scraper
     echo "[run_blocking] Running Published Earnings scraper."
     python -m scrapers.published_earnings

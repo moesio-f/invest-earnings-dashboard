@@ -5,7 +5,7 @@ import logging
 
 import click
 import requests
-from pydantic_settings import BaseSettings
+from .config import CONFIG as config
 
 logger = logging.getLogger(__name__)
 
@@ -17,20 +17,14 @@ URL_IPCA = base64.b64decode(
 ).decode()
 
 
-class EconomicIndexConfig(BaseSettings):
-    wallet_api: str
-
-
 @click.command(name="economic_index")
 def main():
-    wallet_api = EconomicIndexConfig().wallet_api
-
     for index, url in zip(["CDI", "IPCA"], [URL_CDI, URL_IPCA]):
         for last in requests.get(url).json()[-4:]:
             try:
                 date = last["data"].split("/")
                 requests.post(
-                    f"{wallet_api}/v1/economic/add",
+                    f"{config.wallet_api}/v1/economic/add",
                     json=dict(
                         data=[
                             dict(

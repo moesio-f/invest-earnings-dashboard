@@ -221,7 +221,7 @@ def document_dataframe(document: pd.DataFrame):
             ),
             "title": st.column_config.TextColumn("Título"),
             "publish_date": st.column_config.DateColumn(
-                "Data de Publicação", format="MM/YYYY"
+                "Data de Publicação", format=config.ST_DATE_FORMAT
             ),
             "url": st.column_config.LinkColumn("URL"),
         },

@@ -81,6 +81,7 @@ class Client:
             json=dict(
                 name=name,
                 kind=kind,
+                description=description,
                 added=self._maybe_date_to_isoformat(added),
             ),
         ).raise_for_status()

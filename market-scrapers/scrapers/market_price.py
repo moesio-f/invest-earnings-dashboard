@@ -12,17 +12,12 @@ import requests
 import sqlalchemy as sa
 from fake_useragent import UserAgent
 from invest_earning.database.wallet import Asset, AssetKind, MarketPrice
-from pydantic_settings import BaseSettings
 
 from . import db
 from .config import CONFIG as config
 from .dispatcher import Dispatcher
 
 logger = logging.getLogger(__name__)
-
-
-class MarketPriceConfig(BaseSettings):
-    previous_days: int = 30
 
 
 def asset_codes() -> list[tuple[str, AssetKind]]:
@@ -170,7 +165,7 @@ def main(force):
     today = date.today()
 
     # Get data for previous days required by the user
-    start_date = today - timedelta(days=MarketPriceConfig().previous_days)
+    start_date = today - timedelta(days=config.market_price_previous_days)
 
     # Scrape up to today (partial price might be available)
     end_date = today
