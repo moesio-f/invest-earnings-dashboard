@@ -11,7 +11,7 @@ from app.wallet.components import dataframes
 # ===== Inicialização da página =====
 state = PageState("documents")
 today = date.today()
-documents = WalletApi.list_documents()
+documents = WalletApi.list_documents().sort_values("publish_date", ascending=False)
 
 # ==================================================================
 # === Título ===

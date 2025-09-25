@@ -72,12 +72,16 @@ def position_metrics(history: pd.DataFrame):
         container.metric(label, value, delta=delta, help=help)
 
 
-def current_position_metrics(position: pd.DataFrame):
+def current_position_metrics(
+    position: pd.DataFrame, total_balance: float | None = None
+):
     balance = position.balance.sum()
     total_invested = position.total_invested.sum()
     total_ir_adjusted_earnings = position.total_ir_adjusted_earnings.sum()
+
+    containers = st.columns(4 + int(total_balance is not None))
     for container, label, value, help in zip(
-        [*st.columns(4)],
+        containers,
         ["Ativos", "Patrimônio (R$)", "Variação (%)", "Rentabilidade (%)"],
         [
             f"{position.b3_code.nunique()}",
@@ -93,3 +97,10 @@ def current_position_metrics(position: pd.DataFrame):
         ],
     ):
         container.metric(label, value, help=help)
+
+    if total_balance:
+        containers[-1].metric(
+            "% na Carteira",
+            f"{100 * balance / total_balance:.2f}%",
+            help="Porcentagem dessa classe de ativo na carteira.",
+        )

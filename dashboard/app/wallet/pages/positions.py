@@ -34,6 +34,7 @@ with col_b:
 metrics.position_metrics(state.variables.history)
 
 # === Posição por classe de ativo ===
+total_balance = state.variables.current_position.balance.sum()
 for idx, kind in enumerate(constants.AssetKinds):
     df = state.variables.current_position[
         state.variables.current_position.asset_kind == kind
@@ -42,5 +43,5 @@ for idx, kind in enumerate(constants.AssetKinds):
         with st.expander(
             constants.AssetKindMapper.get(kind, kind), expanded=(idx == 0)
         ):
-            metrics.current_position_metrics(df)
+            metrics.current_position_metrics(df, total_balance)
             dataframes.position_dataframe(df.sort_values("b3_code"))
