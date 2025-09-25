@@ -158,6 +158,7 @@ class Position:
                     current_price,
                     balance,
                 )
+                .where(shares > 0)
                 .outerjoin(
                     most_recent_prices,
                     most_recent_prices.c.b3_code == cte.c.b3_code,
