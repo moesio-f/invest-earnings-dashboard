@@ -24,7 +24,7 @@ URL = base64.b64decode(
 ).decode()
 DOC_URL = base64.b64decode(
     "aHR0cHM6Ly9mbmV0LmJtZmJvdmVzcGEuY29tLmJyL2ZuZXQvcHVibGl"
-    "jby92aXN1YWxpemFyRG9jdW1lbnRvPw=="
+    "jby9leGliaXJEb2N1bWVudG8/"
 ).decode()
 
 
@@ -52,11 +52,7 @@ def main():
     random.shuffle(fiis)
 
     for asset, cnpj in fiis:
-        asset_docs = set(
-            (d["title"], d["publish_date"])
-            for d in documents
-            if d["asset_b3_code"] == asset
-        )
+        asset_docs = set(d["url"] for d in documents if d["asset_b3_code"] == asset)
 
         try:
             response = requests.get(
@@ -71,16 +67,18 @@ def main():
 
         available_docs = [
             (
-                d["id"],
                 d["tipoDocumento"],
-                datetime.strptime(d["dataEntrega"], "%d/%m/%Y %H:%M").date().isoformat(),
+                datetime.strptime(d["dataEntrega"], "%d/%m/%Y %H:%M")
+                .date()
+                .isoformat(),
+                f"{DOC_URL}id={d['id']}&cvm=true",
             )
             for d in response.json()["data"]
             if "relatorio" in unidecode(d["categoriaDocumento"]).lower()
         ]
 
-        for id, title, publish_date in available_docs:
-            if (title, publish_date) in asset_docs:
+        for title, publish_date, url in available_docs:
+            if url in asset_docs:
                 continue
 
             try:
@@ -88,12 +86,13 @@ def main():
                     asset_b3_code=asset,
                     title=title,
                     publish_date=publish_date,
-                    url=f"{DOC_URL}id={id}&cvm=true",
+                    url=url,
                 )
                 requests.post(
                     f"{config.wallet_api}/v1/document/add",
                     json=body,
                 ).raise_for_status()
+                asset_docs.add(url)
             except Exception as e:
                 logger.exception("Unable to add document: %s\n\nBody: %s", e, body)
                 continue
