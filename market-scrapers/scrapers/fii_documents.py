@@ -73,7 +73,7 @@ def main():
             (
                 d["id"],
                 d["tipoDocumento"],
-                datetime.strptime(d["dataEntrega"], "%d/%m/%Y %H:%M").date(),
+                datetime.strptime(d["dataEntrega"], "%d/%m/%Y %H:%M").date().isoformat(),
             )
             for d in response.json()["data"]
             if "relatorio" in unidecode(d["categoriaDocumento"]).lower()
@@ -87,7 +87,7 @@ def main():
                 body = dict(
                     asset_b3_code=asset,
                     title=title,
-                    publish_date=publish_date.isoformat(),
+                    publish_date=publish_date,
                     url=f"{DOC_URL}id={id}&cvm=true",
                 )
                 requests.post(
