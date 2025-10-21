@@ -412,21 +412,21 @@ def add_economic_data(
         d["reference_date"] = app_utils.to_last_day_of_the_month(d["reference_date"])
 
         # Check whether it already exists
-        if (
+        economic_data = (
             session.query(EconomicData)
             .where(EconomicData.index == d["index"])
             .where(EconomicData.reference_date == d["reference_date"])
             .one_or_none()
-            is not None
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail="Economic data already exists for "
-                f"<{d['index']}, {d['reference_date']}> (index={idx}).",
-            )
+        )
 
-        objects.append(EconomicData(**d))
-        session.add(objects[-1])
+        if economic_data is not None:
+            for k, v in d.items():
+                setattr(economic_data, k, v)
+        else:
+            economic_data = EconomicData(**d)
+
+        session.add(economic_data)
+        objects.append(economic_data)
 
     # Save all transactions
     session.commit()
