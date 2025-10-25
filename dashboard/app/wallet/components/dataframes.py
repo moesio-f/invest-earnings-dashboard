@@ -206,14 +206,13 @@ def position_dataframe(position: pd.DataFrame):
 
 
 def document_dataframe(document: pd.DataFrame):
+    document = document.copy()
+    document["gpt_url"] = document.url.map(
+        lambda v: f"https://chatgpt.com/?q=Analise o seguinte relatório: {v}"
+    )
     st.dataframe(
         document,
-        column_order=[
-            "asset_b3_code",
-            "title",
-            "publish_date",
-            "url",
-        ],
+        column_order=["asset_b3_code", "title", "publish_date", "url", "gpt_url"],
         hide_index=True,
         column_config={
             "asset_b3_code": st.column_config.TextColumn(
@@ -224,5 +223,8 @@ def document_dataframe(document: pd.DataFrame):
                 "Data de Publicação", format=config.ST_DATE_FORMAT
             ),
             "url": st.column_config.LinkColumn("URL"),
+            "gpt_url": st.column_config.LinkColumn(
+                "Resumo IA", display_text=":material/smart_toy:"
+            ),
         },
     )
