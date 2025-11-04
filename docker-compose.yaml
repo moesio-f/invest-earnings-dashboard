@@ -76,6 +76,7 @@ services:
         condition: service_completed_successfully
       wallet:
         condition: service_healthy
+    restart: on-failure:3
 
   wallet:
     build:

@@ -20,7 +20,15 @@ URL_IPCA = base64.b64decode(
 @click.command(name="economic_index")
 def main():
     for index, url in zip(["CDI", "IPCA"], [URL_CDI, URL_IPCA]):
-        for last in requests.get(url).json()[-4:]:
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+            data = response.json()
+        except Exception as e:
+            logger.info("Couldn't retrieve data for %s: %s", url, e)
+            continue
+
+        for last in data[-4:]:
             try:
                 date = last["data"].split("/")
                 requests.post(
