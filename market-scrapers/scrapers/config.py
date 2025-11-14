@@ -11,7 +11,6 @@ class Config(BaseSettings):
     broker_url: str = "amqp://guest:guest@localhost:5672/?heartbeat=30"
     timeout: float = 5.0
     market_price_previous_days: int = 30
-    market_price_config_path: Path = Path("asset_config.json")
 
 
 CONFIG = Config()

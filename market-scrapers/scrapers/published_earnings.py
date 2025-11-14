@@ -11,24 +11,17 @@ import click
 import requests
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
-from pydantic import BaseModel
 
 from .config import CONFIG as config
 
 logger = logging.getLogger(__name__)
 
 
-class AssetConfig(BaseModel):
-    code: str
-    supported_urls: list[str]
-    default_ir: float | None = None
-
-
-def has_in_wallet(asset_code: str) -> bool:
-    return requests.get(
-        f"{config.wallet_api}/v1/asset/info/{asset_code}",
-        timeout=config.timeout,
-    ).ok
+def get_assets() -> list[tuple[str, str]]:
+    positions = requests.get(
+        f"{config.wallet_api}/v1/position/on/{date.today().isoformat()}"
+    ).json()
+    return [(p["b3_code"], p["asset_kind"]) for p in positions]
 
 
 def available_earnings(asset_code: str) -> set[tuple[date, date, str]]:
@@ -94,15 +87,8 @@ def extract_strategy_1(b3_code: str, url: str, default_ir: float = None) -> list
 
 
 def extract_data(b3_code: str, url: str, default_ir: float = None):
-    # Select strategy from url
-    if base64.b64decode(b"aW52ZXN0aWRvcjEw").decode() in url.lower():
-        fn = extract_strategy_1
-    else:
-        logger.warning("Unknown strategy for URL '%s'.", url)
-        return
-
     # Extract with strategy
-    data = fn(b3_code, url, default_ir)
+    data = extract_strategy_1(b3_code, url, default_ir)
 
     # If data available, filter and persist
     available = available_earnings(b3_code)
@@ -125,23 +111,21 @@ def extract_data(b3_code: str, url: str, default_ir: float = None):
 
 @click.command(name="published_earnings")
 def main():
-    # Obtain registered assets
-    with config.market_price_config_path.open("r") as f:
-        assets = json.load(f)
-    assets = [AssetConfig.model_validate(d) for d in assets]
+    assets = get_assets()
     random.shuffle(assets)
 
     start_time = time.perf_counter()
-    for asset in assets:
-        url = random.choice(asset.supported_urls)
-        logger.info("Running extraction for asset %s with URL '%s'.", asset.code, url)
+    for b3_code, asset_kind in assets:
+        asset_kind = "acoes" if asset_kind == "Ação" else f"{asset_kind.lower()}s"
+        url = f"https://{base64.b64decode(b'aW52ZXN0aWRvcjEw').decode()}.com.br/{asset_kind}/{b3_code}"
+        logger.info("Running extraction for asset %s with URL '%s'.", b3_code, url)
         try:
             # Run extraction
-            extract_data(asset.code, url, asset.default_ir)
+            extract_data(b3_code, url)
         except Exception as e:
             logger.exception(
                 "Extraction failed for asset %s: %s",
-                asset.code,
+                b3_code,
                 e,
             )
         finally:

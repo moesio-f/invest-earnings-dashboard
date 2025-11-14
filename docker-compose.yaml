@@ -70,7 +70,6 @@ services:
     volumes:
       - ./data:/code/bootstrap
       - ./bak:/code/backup
-      - ./market-scrapers/config/config.json:/code/asset_earnings.json
     depends_on:
       migrations:
         condition: service_completed_successfully
